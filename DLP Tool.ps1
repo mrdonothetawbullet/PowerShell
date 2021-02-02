@@ -58,21 +58,22 @@ $KUL = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent In
 #----------------------------------------------
 function Write-Status
 {
-		[CmdletBinding()]
-		param (
-			[Parameter(Mandatory)]
-			[ValidateNotNullOrEmpty()]
-			[String]$Message
-		)
-		$statusbar1.Text = $Message
-	}
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory)]
+		[ValidateNotNullOrEmpty()]
+		[String]$Message
+	)
+	$statusbar1.Text = $Message
+}
 #endregion Application Functions
 
 #----------------------------------------------
 # Generated Form Function
 #----------------------------------------------
-function Show-DLP_Tool_psf {
-
+function Show-DLP_Tool_psf
+{
+	
 	#----------------------------------------------
 	#region Import the Assemblies
 	#----------------------------------------------
@@ -80,7 +81,7 @@ function Show-DLP_Tool_psf {
 	[void][reflection.assembly]::Load('System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
 	[void][reflection.assembly]::Load('System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
 	#endregion Import Assemblies
-
+	
 	#----------------------------------------------
 	#region Generated Form Objects
 	#----------------------------------------------
@@ -110,145 +111,152 @@ function Show-DLP_Tool_psf {
 	$getVersionToolStripMenuItem = New-Object 'System.Windows.Forms.ToolStripMenuItem'
 	$InitialFormWindowState = New-Object 'System.Windows.Forms.FormWindowState'
 	#endregion Generated Form Objects
-
+	
 	#----------------------------------------------
 	# User Generated Script
 	#----------------------------------------------
 	
-	$formDLPTool_Load={
+	$formDLPTool_Load = {
 		#TODO: Initialize Form Controls here
 		#$Credential = Get-Credential
 	}
 	
-	$pingToolStripMenuItem_Click={
-        Write-Status -Message "Task 'Ping' currently running..."
+	$pingToolStripMenuItem_Click = {
+		Write-Status -Message "Task 'Ping' currently running..."
 		$richtextbox1.Clear()
-        $Servers = $textbox1.lines.Split("`n")
-
-        Foreach ($Server in $Servers)
-        {
-            
-            $richtextbox1.AppendText("$Server : ")
-            If (Test-Connection $Server -Count 1 -Quiet) 
-            {
-                $richtextbox1.SelectionColor = "#007F00"
-                $richtextbox1.AppendText("Online`n")
-            }
-
-            else 
-            {
-                $richtextbox1.SelectionColor = "#FF0000"
-                $richtextbox1.AppendText("Offline`n")
-            } 
-        }
-        Write-Status -Message "Task 'Ping' completed..."
+		$Servers = $textbox1.lines.Split("`n")
+		
+		Foreach ($Server in $Servers)
+		{
+			
+			$richtextbox1.AppendText("$Server : ")
+			If (Test-Connection $Server -Count 1 -Quiet)
+			{
+				$richtextbox1.SelectionColor = "#007F00"
+				$richtextbox1.AppendText("Online`n")
+			}
+			
+			else
+			{
+				$richtextbox1.SelectionColor = "#FF0000"
+				$richtextbox1.AppendText("Offline`n")
+			}
+		}
+		Write-Status -Message "Task 'Ping' completed..."
 		
 	}
 	
-	$getVersionToolStripMenuItem_Click={
-        Write-Status -Message "Task 'Get Version' currently running..."
+	$getVersionToolStripMenuItem_Click = {
+		Write-Status -Message "Task 'Get Version' currently running..."
 		$richtextbox1.Clear()
-        $Servers = $textbox1.lines.Split("`n")
-
-        Foreach ($Server in $Servers) {
-            Get-PSSession | Remove-PSSession
-            $richtextbox1.AppendText("$Server : ")
-            Try { 
-            $MySession = New-PSSession -ComputerName $Server -ErrorAction Stop
-        }
-
-            Catch {
-            $richtextbox1.SelectionColor = "#FF0000"
-            $richtextbox1.AppendText("Failed")
-            Continue
-        }
-
-            Finally { 
-            $Error.Clear() 
-        }
-
-            $MyCommands = {
-                $Path1 = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
-                $Installed1 = Get-ChildItem -Path $Path1 | ForEach { Get-ItemProperty $_.PSPath } | Where-Object { ($_.DisplayName -like "*AgentInstall*") -and ($_.Publisher -like "*Symantec Corp*") }
-                $Version1 = ($Installed1).Displayversion
-
-                $Path2 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
-                $Installed2 = Get-ChildItem -Path $Path2 | ForEach { Get-ItemProperty $_.PSPath } | Where-Object { ($_.DisplayName -like "*AgentInstall*") -and ($_.Publisher -like "*Symantec Corp*") }
-                $Version2 = ($Installed2).Displayversion
-
-                If ($Version1) {
-                $Version1
-            }
-
-                ElseIf ($Version2) {
-                $Version2
-            }
-
-                Else {
-                $Version3 = "Unable to find version"
-            }
-            }
-
-            $Ver = Invoke-Command -Session $MySession -ScriptBlock $MyCommands
-
-            If ($Ver -eq $null) 
-            {
-                $richtextbox1.SelectionColor = "#FF0000"
-                $richtextbox1.AppendText("Unable to find version.`n")
-            }
-
-            ElseIf ($Ver)
-            {
-                $richtextbox1.SelectionColor = "#007F00"
-                $richtextbox1.AppendText("$Ver`n")
-            }
-        }
+		$Servers = $textbox1.lines.Split("`n")
 		
-        Write-Status -Message "Task 'Get Version' completed..."
+		Foreach ($Server in $Servers)
+		{
+			Get-PSSession | Remove-PSSession
+			$richtextbox1.AppendText("$Server : ")
+			Try
+			{
+				$MySession = New-PSSession -ComputerName $Server -ErrorAction Stop
+			}
+			
+			Catch
+			{
+				$richtextbox1.SelectionColor = "#FF0000"
+				$richtextbox1.AppendText("Failed")
+				Continue
+			}
+			
+			Finally
+			{
+				$Error.Clear()
+			}
+			
+			$MyCommands = {
+				$Path1 = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+				$Installed1 = Get-ChildItem -Path $Path1 | ForEach { Get-ItemProperty $_.PSPath } | Where-Object { ($_.DisplayName -like "*AgentInstall*") -and ($_.Publisher -like "*Symantec Corp*") }
+				$Version1 = ($Installed1).Displayversion
+				
+				$Path2 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+				$Installed2 = Get-ChildItem -Path $Path2 | ForEach { Get-ItemProperty $_.PSPath } | Where-Object { ($_.DisplayName -like "*AgentInstall*") -and ($_.Publisher -like "*Symantec Corp*") }
+				$Version2 = ($Installed2).Displayversion
+				
+				If ($Version1)
+				{
+					$Version1
+				}
+				
+				ElseIf ($Version2)
+				{
+					$Version2
+				}
+				
+				Else
+				{
+					$Version3 = "Unable to find version"
+				}
+			}
+			
+			$Ver = Invoke-Command -Session $MySession -ScriptBlock $MyCommands
+			
+			If ($Ver -eq $null)
+			{
+				$richtextbox1.SelectionColor = "#FF0000"
+				$richtextbox1.AppendText("Unable to find version.`n")
+			}
+			
+			ElseIf ($Ver)
+			{
+				$richtextbox1.SelectionColor = "#007F00"
+				$richtextbox1.AppendText("$Ver`n")
+			}
+		}
+		
+		Write-Status -Message "Task 'Get Version' completed..."
 	}
 	
-	$openDLPSharedDriveToolStripMenuItem_Click={
-        Write-Status -Message "Task 'Opening DLP Shared Drive' currently running..."
+	$openDLPSharedDriveToolStripMenuItem_Click = {
+		Write-Status -Message "Task 'Opening DLP Shared Drive' currently running..."
 		explorer "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP"
-        Write-Status -Message "Task 'Opening DLP Shared Drive' completed..."
+		Write-Status -Message "Task 'Opening DLP Shared Drive' completed..."
 	}
 	
-	$stopDLPServicesToolStripMenuItem_Click={
+	$stopDLPServicesToolStripMenuItem_Click = {
 		#TODO: Place custom script here
 		
 	}
 	
-	$viewDLPServicesToolStripMenuItem_Click={
+	$viewDLPServicesToolStripMenuItem_Click = {
 		#TODO: Place custom script here
 		
 	}
 	
-	$removeDLPToolStripMenuItem_Click={
+	$removeDLPToolStripMenuItem_Click = {
 		#TODO: Place custom script here
 		
 	}
 	
-	$installDLPToolStripMenuItem_Click={
+	$installDLPToolStripMenuItem_Click = {
 		#TODO: Place custom script here
 		
 	}
 	
-	$reInstallDLPToolStripMenuItem_Click={
+	$reInstallDLPToolStripMenuItem_Click = {
 		#TODO: Place custom script here
 		
 	}
 	
-	$dLPStatusToolStripMenuItem_Click={
+	$dLPStatusToolStripMenuItem_Click = {
 		#TODO: Place custom script here
 		
 	}
 	
-	$getInstallationLogInstallLogAndCleanupLogToolStripMenuItem_Click={
+	$getInstallationLogInstallLogAndCleanupLogToolStripMenuItem_Click = {
 		#TODO: Place custom script here
 		
 	}
 	
-	$restartServerToolStripMenuItem_Click={
+	$restartServerToolStripMenuItem_Click = {
 		#TODO: Place custom script here
 		
 	}
@@ -258,13 +266,13 @@ function Show-DLP_Tool_psf {
 	#region Generated Events
 	#----------------------------------------------
 	
-	$Form_StateCorrection_Load=
+	$Form_StateCorrection_Load =
 	{
 		#Correct the initial state of the form to prevent the .Net maximized form issue
 		$formDLPTool.WindowState = $InitialFormWindowState
 	}
 	
-	$Form_Cleanup_FormClosed=
+	$Form_Cleanup_FormClosed =
 	{
 		#Remove all event handlers from the controls
 		try
@@ -287,7 +295,7 @@ function Show-DLP_Tool_psf {
 		catch { Out-Null <# Prevent PSScriptAnalyzer warning #> }
 	}
 	#endregion Generated Events
-
+	
 	#----------------------------------------------
 	#region Generated Form Code
 	#----------------------------------------------
@@ -588,7 +596,7 @@ Bv8f85kJWqbvGVYAAAAASUVORK5CYII=')
 	$textbox1.Name = 'textbox1'
 	$textbox1.Size = '116, 288'
 	$textbox1.TabIndex = 2
-    $textbox1.WordWrap = $False
+	$textbox1.WordWrap = $False
 	#
 	# labelServerList
 	#
@@ -738,9 +746,9 @@ Bv8f85kJWqbvGVYAAAAASUVORK5CYII=')
 	$menustrip1.ResumeLayout()
 	$formDLPTool.ResumeLayout()
 	#endregion Generated Form Code
-
+	
 	#----------------------------------------------
-
+	
 	#Save the initial state of the form
 	$InitialFormWindowState = $formDLPTool.WindowState
 	#Init the OnLoad event to correct the initial state of the form
@@ -749,8 +757,12 @@ Bv8f85kJWqbvGVYAAAAASUVORK5CYII=')
 	$formDLPTool.add_FormClosed($Form_Cleanup_FormClosed)
 	#Show the Form
 	return $formDLPTool.ShowDialog()
-
+	
 } #End Function
 
 #Call the form
 Show-DLP_Tool_psf | Out-Null
+$formDLPTool_Load={
+	#TODO: Place custom script here
+	
+}
