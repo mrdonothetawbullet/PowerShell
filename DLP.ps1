@@ -1,82 +1,65 @@
 Clear-Host
-    Get-PSSession | Remove-PSSession
-    Remove-Variable * -ErrorAction SilentlyContinue; $Error.Clear();
-    $Password = ConvertTo-SecureString "Welcome11" -AsPlainText -Force
-    $Cred = New-Object System.Management.Automation.PSCredential ("globalnet\suhail_asrulsani-ops", $Password)
-    $ScriptDir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-    $Machinelist = @(get-content -Path "$ScriptDir\Machinelist.txt")
-    $datetime = Get-Date -Format G
-    $dt = (Get-Date).ToString("ddMMyyyy_HHmmss") 
-    $translocation4 = "$ScriptDir\Verify DLP Installation Status-$dt.txt"
-    $Location = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\15.1 MP2 - Service Shutdown & Uninstall\service_shutdown.exe"
 
-    #BalikPapan
-    $BPN = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\BPNKRNVMDLPED01\BPNKRNVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
+#region Global Variable Functions
+#----------------------------------------------
+Get-PSSession | Remove-PSSession
+Remove-Variable * -ErrorAction SilentlyContinue; $Error.Clear();
+$Password = ConvertTo-SecureString "Welcome11" -AsPlainText -Force
+$Cred = New-Object System.Management.Automation.PSCredential ("globalnet\suhail_asrulsani-ops", $Password)
+$ScriptDir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+$Machinelist = @(get-content -Path "$ScriptDir\Machinelist.txt")
+$datetime = Get-Date -Format G
+$dt = (Get-Date).ToString("ddMMyyyy_HHmmss") 
+$translocation4 = "$ScriptDir\Verify DLP Installation Status-$dt.txt"
+$Location = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\15.1 MP2 - Service Shutdown & Uninstall\service_shutdown.exe"
+#BalikPapan
+$BPN = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\BPNKRNVMDLPED01\BPNKRNVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
+#Dumai
+$DMI = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\PKUVMDLPED01\PKUVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
+#Jakarta
+$JKT = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\JKTVMDLPED01\JKTVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
+#Kerinci
+$KER = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\KERVMDLPED01\KERVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
+#Marunda
+$MAR = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\JKTVMDLPED01\JKTVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
+#Medan
+$MED = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\MEDVMDLPED01\MEDVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
+#Padang
+$PDG = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\PKUVMDLPED01\PKUVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
+#PekanBaru
+$PKU = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\PKUVMDLPED01\PKUVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
+#Porsea
+$PSA = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\PSAVMDLPED01\PSAVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
+#Beijing
+$BJ = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\XHVMDLPED01\XHVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
+#JiuJiang
+$JJ = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\JXVMDLPED01\JXVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
+#Longtan
+$LTA = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\XHVMDLPED01\XHVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
+#Nanjing
+$NJ = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\XHVMDLPED01\XHVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
+#Putian
+$PT = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\JXVMDLPED01\JXVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
+#Rizhao
+$RZ = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\RZVMDLPED01\RZVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
+#ShangHai
+$SZDCSH = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\XHVMDLPED01\XHVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
+#SuQian
+$SQ = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\RZVMDLPED01\RZVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
+#Wuxi
+$WX = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\XHVMDLPED01\XHVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
+#Xiamen
+$XM = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\XHVMDLPED01\XHVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
+#XinHui
+$XH = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\XHVMDLPED01\XHVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
+#Zhangzhou
+$SZDCZZ = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\XHVMDLPED01\XHVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
+#KL
+$KUL = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\KULBSCVMDLPED01\KULBSCVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
+#endregion Global Variable Functions
 
-    #Dumai
-    $DMI = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\PKUVMDLPED01\PKUVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
-
-    #Jakarta
-    $JKT = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\JKTVMDLPED01\JKTVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
-
-    #Kerinci
-    $KER = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\KERVMDLPED01\KERVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
-
-    #Marunda
-    $MAR = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\JKTVMDLPED01\JKTVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
-
-    #Medan
-    $MED = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\MEDVMDLPED01\MEDVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
-
-    #Padang
-    $PDG = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\PKUVMDLPED01\PKUVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
-
-    #PekanBaru
-    $PKU = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\PKUVMDLPED01\PKUVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
-
-    #Porsea
-    $PSA = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\PSAVMDLPED01\PSAVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
-
-    #Beijing
-    $BJ = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\XHVMDLPED01\XHVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
-
-    #JiuJiang
-    $JJ = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\JXVMDLPED01\JXVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
-
-    #Longtan
-    $LTA = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\XHVMDLPED01\XHVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
-
-    #Nanjing
-    $NJ = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\XHVMDLPED01\XHVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
-
-    #Putian
-    $PT = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\JXVMDLPED01\JXVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
-
-    #Rizhao
-    $RZ = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\RZVMDLPED01\RZVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
-
-    #ShangHai
-    $SZDCSH = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\XHVMDLPED01\XHVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
-
-    #SuQian
-    $SQ = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\RZVMDLPED01\RZVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
-
-    #Wuxi
-    $WX = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\XHVMDLPED01\XHVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
-
-    #Xiamen
-    $XM = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\XHVMDLPED01\XHVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
-
-    #XinHui
-    $XH = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\XHVMDLPED01\XHVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
-
-    #Zhangzhou
-    $SZDCZZ = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\XHVMDLPED01\XHVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
-
-    #KL
-    $KUL = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\KULBSCVMDLPED01\KULBSCVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
-    
-
+#region Functions
+#----------------------------------------------
 
 Function Function_Zero 
 {
@@ -584,157 +567,222 @@ $Input_restart = Read-Host "Uninstall DLP Agent Now? (y/n)"
      {
         Foreach ($machine in $machinelist)
     {
+        Get-PSSession | Remove-PSSession
         Write-Host "`n"
-        Write-Host "$machine" -ForegroundColor Yellow
-        Write-Host "Establishing remote connection to $machine : " -NoNewline
-        Try { $MySession = New-PSSession -ComputerName $machine -Credential $cred -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
-        Catch { Write-Host "Failed" -ForegroundColor Red; Write-Host "`n"; Continue }
-        Finally { $Error.Clear() }
-    
-        $MyCommands = 
+        $pathpf = "\\$machine\c$\Program Files\Manufacturer\Endpoint Agent\"
+        $pathpf86 = "\\$machine\c$\Program Files (x86)\Manufacturer\Endpoint Agent\"
+
+        Write-Host $machine -ForegroundColor Yellow
+        Write-Host "Checking service_shutdown.exe location : " -NoNewline
+
+        If (Test-Path -Path $pathpf)
         {
+            Write-Host "Folder exist at Program Files" -ForegroundColor Green
+            Write-Host "Copying service_shutdown.exe to Program Files\Manufacturer\Endpoint Agent\: " -NoNewline
+            Try { Copy-Item -Path $Location -Destination "\\$machine\c$\Program Files\Manufacturer\Endpoint Agent\" -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
+            Catch { Write-Warning ($_); Write-Host "`n"; Continue }
+            Finally { $Error.Clear() }
 
-            Write-Host "Checking EDPA service state : " -NoNewline
-            $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State; $StatusE = $Edpa;
-            If (($StatusE -like "*Stopped*") -or ($StatusE -eq $null)) 
-            { 
-                Write-Host "Stopped" -ForegroundColor Green
-            }
-
-            If ($StatusE -like "*Running*")
+            Write-Host "Establishing remote connection to $machine : "  -NoNewline
+            Try { $MySession = New-PSSession -ComputerName $machine -Credential $Cred -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
+            Catch { Write-Host "Failed" -ForegroundColor Red; Write-Host "`n"; Continue }
+            Finally { $Error.Clear() }
+            $MyCommands = 
             {
-                Write-Host "Running" -ForegroundColor Red
-                #Continue
-            }
 
-            Write-Host "Checking WDP service state : " -NoNewline
-            $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State; $StatusW = $Wdp
-            If (($StatusW -like "*Stopped*") -or ($StatusW -eq $null)) 
-            { 
-                Write-Host "Stopped" -ForegroundColor Green 
-            }
+                 Function Uninstall_Agent
+                 {
+                            Write-Host "Stopping EDPA and WDP Service : " -NoNewline
+                            cd "C:\Program Files\Manufacturer\Endpoint Agent"
+                            cmd.exe /c "service_shutdown.exe -p=Welcome1" | Out-Null
 
-            If ($StatusW -like "*Running*")
-            {
-                Write-Host "Running" -ForegroundColor Red
-                #Continue
-            }
+                            $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State
+                            $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State
 
-            #Finding Product GUID
-            Write-Host "Finding Product GUID : " -NoNewline
-            function Get-InstalledSoftware 
-            {
-    
+                            If (($Edpa -eq "Stopped") -and ($Wdp -eq "Stopped") )
+                            {
+                            Write-Host "SUCCESS" -ForegroundColor Green
+                            }
+
+                            Else 
+                            {
+                                Write-Host "Stop Service failed but the force uninstallation will continue anyway" -ForegroundColor Green
+                            }
+                        
+                            Write-Host "Executing clean_agent.exe : " -NoNewline
+                            cd "C:\Patches"
+                            cmd.exe /c "echo y | clean_agent.exe -p=Welcome1" | Out-Null
+
+                            $Edpa = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*EDPA*") }).State; $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State; $StatusE = $Edpa; $StatusW = $Wdp
+                            $Ice = "C:\Program Files\Manufacturer\Endpoint Agent\ICE.exe"
+
+                            If ((Test-Path $Ice) -or ($StatusE) )
+                            {
+                                Write-Host "Uninstallation still not completed" -ForegroundColor Red
+                            }
+
+                            If ((!(Test-Path $Ice)) -and ($StatusE -eq $null) -and ($StatusW -eq $null) ) 
+                            {
+                                Write-Host "Uninstallation is completed" -ForegroundColor Green
+                                Install_Agent
+                            }
+                        }
+
+                Write-Host "Executing service_shutdown.exe : "  -NoNewline
+                Try { cd "C:\Program Files\Manufacturer\Endpoint Agent" -ErrorAction Stop } Catch { }
+                cmd.exe /c "service_shutdown.exe -p=Welcome1" | Out-Null 2>$null
+
+                $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State
+                $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State
+
+                If (($Edpa -eq "Stopped") -and ($Wdp -eq "Stopped") )
+                {
+                    Write-Host "SUCCESS. Force Uninstallation will continue now" -ForegroundColor Green
+                }
+
+                ElseIf (($Edpa -eq "Running") -or ($Wdp -eq "Running") )
+                {
+                    Write-Host "Failed. Services still running. Force Uninstallation will continue anyway" -ForegroundColor Green
+                }
+
+                ElseIf (($Edpa -eq "Running") -or ($Wdp -eq "Running") )
+                {
+                    Write-Host "Services it not exist. Force Uninstallation will continue anyway" -ForegroundColor Green
+
+                }
+
+                Write-Host "Checking OS Architecture : " -NoNewline
+                Try { $OS = (Get-WmiObject Win32_OperatingSystem).OsArchitecture; Write-Host "$OS" -ForegroundColor Green }
+                Catch { Write-Warning ($_); Continue }
+                Finally { $Error.Clear() }
+
+                #Transferring clean_agent.exe
+                Write-Host "Transferring clean_agent.exe to C:\Patches : " -NoNewline
+                $Path = "\\$machine\c$\Patches\"
+                $Source64 = "$ScriptDir\x64\clean_agent.exe"
+                $Source32 = "$ScriptDir\x86\clean_agent.exe"
+                If ($OS -eq "64-bit")
+                {
+                    Try { New-Item -ItemType Directory -Path $Path -Force -ErrorAction Stop } Catch {  }
+                    Try { Copy-Item $Source64 -Destination $Path -Force -Recurse -ErrorAction Stop } Catch { }
+                    If (Test-Path -Path "C:\Patches\clean_agent.exe") { Write-Host "SUCCESS" -ForegroundColor Green } Else { Write-Host "Failed" -ForegroundColor Red; Continue }
+
+                    Write-Host "Executing clean_agent.exe : " -NoNewline
+                    Try { cd "C:\Patches" -ErrorAction Stop } Catch { }
+                    cmd.exe /c "echo y | clean_agent.exe -p=Welcome1" | Out-Null
+
+                    #Checking Installation Status by checking the services
+                    $Edpa = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*EDPA*") }).State; $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State; $StatusE = $Edpa; $StatusW = $Wdp
+                    $Ice = "C:\Program Files\Manufacturer\Endpoint Agent\ICE.exe"
+                    If ((Test-Path $Ice) -or ($StatusE) )
+                    {
+                        Write-Host "Uninstallation is not complete" -ForegroundColor Red
+                        Write-Host "Uninstallation will be continue for the 2nd time"
+                        Uninstall_Agent
+                    }
+
+                    If ((!(Test-Path $Ice)) -and ($StatusE -eq $null) -and ($StatusW -eq $null) ) 
+                    {
+                        Write-Host "Uninstallation is completed" -ForegroundColor Green
+                    }
+                }
+
+                ElseIf ($OS -eq "32-bit")
+                {
+                    Try { New-Item -ItemType Directory -Path $Path -Force -ErrorAction Stop } Catch {  }
+                    Try { Copy-Item $Source32 -Destination $Path -Force -Recurse -ErrorAction Stop } Catch { }
+                    If (Test-Path -Path "C:\Patches\clean_agent.exe") { Write-Host "SUCCESS" -ForegroundColor Green } Else { Write-Host "Failed" -ForegroundColor Red; Continue }
+
+                    Write-Host "Executing clean_agent.exe : " -NoNewline
+                    Try { cd "C:\Patches" -ErrorAction Stop } Catch { }
+                    cmd.exe /c "echo y | clean_agent.exe -p=Welcome1" | Out-Null
+
+                    #Checking Installation Status by checking the services
+                    $Edpa = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*EDPA*") }).State; $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State; $StatusE = $Edpa; $StatusW = $Wdp
+                    $Ice = "C:\Program Files (x86)\Manufacturer\Endpoint Agent\ICE.exe"
+                    If ((Test-Path $Ice) -or ($StatusE) )
+                    {
+                        Write-Host "Uninstallation is not complete" -ForegroundColor Red
+                        Write-Host "Uninstallation will be continue for the 2nd time"
+                        Uninstall_Agent
+                    }
+
+                    If ((!(Test-Path $Ice)) -and ($StatusE -eq $null) -and ($StatusW -eq $null) ) 
+                    {
+                        Write-Host "Uninstallation is completed" -ForegroundColor Green
+                    }
+                }
             
-            [OutputType([System.Management.Automation.PSObject])]
-            [CmdletBinding()]
-            param (
-                [Parameter()]
-                [ValidateNotNullOrEmpty()]
-                [string]$Name
-            )
- 
-            $UninstallKeys = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall", "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
-            $null = New-PSDrive -Name HKU -PSProvider Registry -Root Registry::HKEY_USERS
-            $UninstallKeys += Get-ChildItem HKU: -ErrorAction SilentlyContinue | Where-Object { $_.Name -match 'S-\d-\d+-(\d+-){1,14}\d+$' } | ForEach-Object { "HKU:\$($_.PSChildName)\Software\Microsoft\Windows\CurrentVersion\Uninstall" }
-            if (-not $UninstallKeys) {
-                Write-Verbose -Message 'No software registry keys found'
-            } else {
-                foreach ($UninstallKey in $UninstallKeys) {
-                    if ($PSBoundParameters.ContainsKey('Name')) {
-                        $WhereBlock = { ($_.PSChildName -match '^{[A-Z0-9]{8}-([A-Z0-9]{4}-){3}[A-Z0-9]{12}}$') -and ($_.GetValue('DisplayName') -like "$Name*") }
-                    } else {
-                        $WhereBlock = { ($_.PSChildName -match '^{[A-Z0-9]{8}-([A-Z0-9]{4}-){3}[A-Z0-9]{12}}$') -and ($_.GetValue('DisplayName')) }
-                    }
-                    $gciParams = @{
-                        Path        = $UninstallKey
-                        ErrorAction = 'SilentlyContinue'
-                    }
-                    $selectProperties = @(
-                        @{n='GUID'; e={$_.PSChildName}}, 
-                        @{n='Name'; e={$_.GetValue('DisplayName')}}
-                    )
-                    Get-ChildItem @gciParams | Where $WhereBlock | Select-Object -Property $selectProperties
-                }
-                }
-            }
-            $ProductGUID = (Get-InstalledSoftware -Name 'AgentInstall').GUID
-            $GUID = $ProductGUID
-
-            If ($GUID)
-            {
-                Write-Host "$GUID" -ForegroundColor Green
-                Write-Host "Uninstalling DLP : " -NoNewline
-                cmd.exe /c "MsiExec.exe /X $GUID /q UNINSTALLPASSWORD=Welcome1" | Out-Null
-                
             }
 
-            ElseIf ($GUID -eq $null)
-            {
-                Write-Host "GUID not found. The software is not exist in current server" -ForegroundColor Red; Continue
-            }
-
-            #Checking Installation Status by checking the services
-            $Edpa = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*EDPA*") }).State; $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State; $StatusE = $Edpa; $StatusW = $Wdp
-            $Ice = "C:\Program Files\Manufacturer\Endpoint Agent\ICE.exe"
-            If ((Test-Path $Ice) -or ($StatusE) )
-            {
-                Write-Host "Uninstallation is not complete" -ForegroundColor Red
-                Continue
-            }
-
-            If ((!(Test-Path $Ice)) -and ($StatusE -eq $null) -and ($StatusW -eq $null) ) 
-            {
-                Write-Host "Uninstallation is completed" -ForegroundColor Green
-            }
-
-
-            #Write-Host "$GUID" -ForegroundColor Green
-            $Path1 = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
-            $Installed1 = Get-ChildItem -Path $Path1 | ForEach { Get-ItemProperty $_.PSPath } | Where-Object { ($_.DisplayName -like "*AgentInstall*") -and ($_.Publisher -like "*Symantec Corp*") }
-            $String1 = ($Installed1).UninstallString
-            $Path2 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
-            $Installed2 = Get-ChildItem -Path $Path2 | ForEach { Get-ItemProperty $_.PSPath } | Where-Object { ($_.DisplayName -like "*AgentInstall*") -and ($_.Publisher -like "*Symantec Corp*") }
-            $String2 = ($Installed2).UninstallString
-            $Path3 = "C:\Program Files\Manufacturer"; $Path4 = "C:\Program Files (x86)\Manufacturer"
-            $file1 = "C:\Windows\System32\vfsmfd.sys"; $file2 = "C:\Windows\System32\vnwcd.sys"; $file3 = "C:\Windows\System32\vrtam.sys"
-            $reg1 = "HKLM:\SYSTEM\CurrentControlSet\Services\EDPA"; $reg2 = "HKLM:\SYSTEM\CurrentControlSet\Services\WDP"
-            $regleftover1 = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$GUID"; $regleftover2 = "HKLM:\SOFTWARE\Wow6432Node\AdventNet\DesktopCentral\DCAgent\Inventory\System\Software\Wow64Node\Uninstall\$GUID"
-        
-           
-            #Write-Host "Finding UninstallString from registry : " -NoNewline
-
-        #If ($String1) 
-        #{ 
-            #Write-Host "$String1" -ForegroundColor Green
-            #Write-Host "Uninstalling DLP : " -NoNewline
-            #cmd.exe /c "$String1 /q UNINSTALLPASSWORD=Welcome1" | Out-Null
-            #Write-Host "Done" -ForegroundColor Green
-        #}
-
-        #ElseIf ($String2) 
-        #{ 
-            #Write-Host "$String2" -ForegroundColor Green
-            #Write-Host "Uninstalling DLP : " -NoNewline
-            #cmd.exe /c "$String2 /q UNINSTALLPASSWORD=Welcome1" | Out-Null
-            #Write-Host "Done" -ForegroundColor Green
-        #}
-
-        #Else 
-        #{ 
-            #Write-Warning "Unable to find Uninstall String" 
-        #}
-        #Write-Host "Remove leftover from folder & registry : " -NoNewline
-        #Remove-Item -LiteralPath $Path3 -Force -Recurse -ErrorAction SilentlyContinue; Remove-Item -LiteralPath "$Path4" -Force -Recurse -ErrorAction SilentlyContinue
-        #Remove-Item -Path $file1 -Force -ErrorAction SilentlyContinue; Remove-Item -Path $file2 -Force -ErrorAction SilentlyContinue; Remove-Item -Path $file3 -Force -ErrorAction SilentlyContinue
-        #Remove-Item -Path $reg1 -Force -ErrorAction SilentlyContinue; Remove-Item -Path $reg2 -Force -ErrorAction SilentlyContinue
-        #Remove-Item -Path $regleftover1 -Force -ErrorAction SilentlyContinue; Remove-Item -Path $regleftover2 -Force -ErrorAction SilentlyContinue
-        #Write-Host "Done" -ForegroundColor Green
- 
-    }
-        Invoke-Command -Session $MySession -ScriptBlock $MyCommands -ErrorAction Stop
-        Write-Host "`n"
+            Invoke-Command -Session $MySession -ScriptBlock $MyCommands -ErrorAction Stop
         }
+
+        Elseif (Test-Path -Path $pathpf86)
+        {
+            Write-Host "Folder exist at Program Files (x86)" -ForegroundColor Green
+            Write-Host "Copying service_shutdown.exe to Program Files (x86)\Manufacturer\Endpoint Agent\: " -NoNewline
+            Try { Copy-Item -Path $Location -Destination "\\$machine\c$\Program Files (x86)\Manufacturer\Endpoint Agent\" -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
+            Catch { Write-Warning ($_); Write-Host "`n"; Continue }
+            Finally { $Error.Clear() }
+
+            Write-Host "Establishing remote connection to $machine : "  -NoNewline
+            Try { $MySession = New-PSSession -ComputerName $machine -Credential $Cred -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
+            Catch { Write-Host "Failed" -ForegroundColor Red; Write-Host "`n"; Continue }
+            Finally { $Error.Clear() }
+            $MyCommands = 
+            {
+                Write-Host "Executing service_shutdown.exe : "  -NoNewline
+                Try { cd "C:\Program Files (x86)\Manufacturer\Endpoint Agent" -ErrorAction Stop } Catch { }
+                cmd.exe /c "service_shutdown.exe -p=Welcome1" | Out-Null 2>$null
+
+                $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State
+                $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State
+
+                If (($Edpa -eq "Stopped") -and ($Wdp -eq "Stopped") )
+                {
+                    Write-Host "SUCCESS. Force Uninstallation will continue now" -ForegroundColor Green
+                }
+
+                ElseIf (($Edpa -eq "Running") -or ($Wdp -eq "Running") )
+                {
+                    Write-Host "Failed. Services still running. Force Uninstallation will continue anyway" -ForegroundColor Green
+                }
+
+                ElseIf (($Edpa -eq "Running") -or ($Wdp -eq "Running") )
+                {
+                    Write-Host "Services it not exist. Force Uninstallation will continue anyway" -ForegroundColor Green
+
+                }
+
+                Write-Host "Checking OS Architecture : " -NoNewline
+                Try { $OS = (Get-WmiObject Win32_OperatingSystem).OsArchitecture; Write-Host "$OS" -ForegroundColor Green }
+                Catch { Write-Warning ($_); Continue }
+                Finally { $Error.Clear() }
+
+                #Transferring clean_agent.exe
+                Write-Host "Transferring clean_agent.exe to C:\Patches : " -NoNewline
+                $Path = "\\$machine\c$\Patches\"
+                $Source64 = "$ScriptDir\x64\clean_agent.exe"
+                $Source32 = "$ScriptDir\x86\clean_agent.exe"
+                If ($OS -eq "32-bit")
+                {
+                    Try { New-Item -ItemType Directory -Path $Path -Force -ErrorAction Stop } Catch {  }
+                    Try { Copy-Item $Source32 -Destination $Path -Force -Recurse -ErrorAction Stop } Catch { }
+                    If (Test-Path -Path "C:\Patches\clean_agent.exe") { Write-Host "SUCCESS" -ForegroundColor Green } Else { Write-Host "Failed" -ForegroundColor Red; Continue }
+                }
+
+                ElseIf ($OS -eq "32-bit")
+                {
+                    Try { New-Item -ItemType Directory -Path $Path -Force -ErrorAction Stop } Catch {  }
+                    Try { Copy-Item $Source32 -Destination $Path -Force -Recurse -ErrorAction Stop } Catch { }
+                    If (Test-Path -Path "C:\Patches\clean_agent.exe") { Write-Host "SUCCESS" -ForegroundColor Green } Else { Write-Host "Failed" -ForegroundColor Red; Continue }
+                }
+
+            }
+            Invoke-Command -Session $MySession -ScriptBlock $MyCommands -ErrorAction Stop
+        }
+    }
      }
 
      'n' 
@@ -1372,11 +1420,11 @@ Function Function_Ten
         $Path3 = "\\$Machine\c$\InstallAgent.log"
         $Path4 = "\\$Machine\c$\Patches\Clean_Agent.log"
 
-        New-Item -ItemType Directory -Path "$ScriptDir\Log\$Machine" -Force -ErrorAction SilentlyContinue | Out-Null
-        Copy-Item $Path1 -Destination "$ScriptDir\Log\$Machine\" -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
-        Copy-Item $Path2 -Destination "$ScriptDir\Log\$Machine\" -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
-        Copy-Item $Path3 -Destination "$ScriptDir\Log\$Machine\" -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
-        Copy-Item $Path4 -Destination "$ScriptDir\Log\$Machine\" -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
+        Try { New-Item -ItemType Directory -Path "$ScriptDir\Log\$Machine" -Force -ErrorAction Stop | Out-Null } Catch {  }
+        Try { Copy-Item $Path1 -Destination "$ScriptDir\Log\$Machine\" -Force -Recurse -ErrorAction Stop } Catch {  }
+        Try { Copy-Item $Path2 -Destination "$ScriptDir\Log\$Machine\" -Force -Recurse -ErrorAction Stop } Catch {  }
+        Try { Copy-Item $Path3 -Destination "$ScriptDir\Log\$Machine\" -Force -Recurse -ErrorAction Stop } Catch {  }
+        Try { Copy-Item $Path4 -Destination "$ScriptDir\Log\$Machine\" -Force -Recurse -ErrorAction Stop } Catch {  }
         Write-Host "Logs file has been saved in" $ScriptDir\Log\$Machine\ -ForegroundColor Green
     }
 
@@ -1416,6 +1464,9 @@ Function Function_Twelve
     }
 }
 
+#endregion Functions
+
+#region Menu
 function Show-Menu {
 param ( [string]$Title = 'Menu' )
 Clear-Host
@@ -1425,7 +1476,7 @@ Write-Host " [1] Ping"
 Write-Host " [2] Check DLP Version"
 Write-Host " [3] Copy Installer"
 Write-Host " [4] Stop DLP Services"
-Write-Host " [5] Uninstall DLP Agent (Normal)"
+Write-Host " [5] Uninstall DLP Agent"
 Write-Host " [6] Reinstall DLP Agent"
 Write-Host " [7] Install DLP Agent"
 Write-Host " [8] Verify DLP Installation Status"
@@ -1466,3 +1517,4 @@ pause
 }
 until ($input -eq 'q')
 Get-PSSession | Remove-PSSession
+#endregion Menu
