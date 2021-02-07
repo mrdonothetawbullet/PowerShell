@@ -4,7 +4,7 @@ Clear-Host
 #----------------------------------------------
 Get-PSSession | Remove-PSSession
 Remove-Variable * -ErrorAction SilentlyContinue; $Error.Clear();
-$Password = ConvertTo-SecureString "Welcome11" -AsPlainText -Force
+$Password = ConvertTo-SecureString "Welcome12" -AsPlainText -Force
 $Cred = New-Object System.Management.Automation.PSCredential ("globalnet\suhail_asrulsani-ops", $Password)
 $ScriptDir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $Machinelist = @(get-content -Path "$ScriptDir\Machinelist.txt")
@@ -12,6 +12,7 @@ $datetime = Get-Date -Format G
 $dt = (Get-Date).ToString("ddMMyyyy_HHmmss") 
 $translocation4 = "$ScriptDir\Verify DLP Installation Status-$dt.txt"
 $Location = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\15.1 MP2 - Service Shutdown & Uninstall\service_shutdown.exe"
+Try { Remove-Item -Path "$ScriptDir\DLPStatus.xlsx" -Force -Recurse -ErrorAction Stop } Catch {}
 #BalikPapan
 $BPN = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\BPNKRNVMDLPED01\BPNKRNVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
 #Dumai
@@ -56,6 +57,8 @@ $XH = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Ins
 $SZDCZZ = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\XHVMDLPED01\XHVMDLPED01_AgentInstallers_15.1 MP2.zip\AgentInstaller_Win64\*"
 #KL
 $KUL = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\KULBSCVMDLPED01\KULBSCVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
+#Jakarta
+$RAP = "\\kulbscvmfs03\IT\98 Software Installer\99-Other\DLP Agents\DLP\Agent Installation Instructions\JKTVMDLPED01\JKTVMDLPED01_AgentInstallers_15.1 MP2\AgentInstaller_Win64\*"
 #endregion Global Variable Functions
 
 #region Functions
@@ -89,9 +92,10 @@ Function Function_One
 
 Function Function_Two
 {
-Clear-Host
+$Machinelist = @(get-content -Path "$ScriptDir\Machinelist.txt")
 Foreach ($Machine in $machinelist)
     {
+        $Machinelist = @(get-content -Path "$ScriptDir\Machinelist.txt")
         Get-PSSession | Remove-PSSession
         Write-Host "$machine : " -NoNewline
         Try { $MySession = New-PSSession -ComputerName $machine -Credential $Cred -ErrorAction Stop; }
@@ -130,7 +134,7 @@ Foreach ($Machine in $machinelist)
 
 Function Function_Three
 {
-    Clear-Host
+    $Machinelist = @(get-content -Path "$ScriptDir\Machinelist.txt")
     Foreach ($machine in $Machinelist)
 {
     Write-Host "`n"
@@ -198,6 +202,20 @@ Function Function_Three
     }
 
     ElseIf ($Machine -match '^JKT')
+    {
+        Write-Host "Jakarta" -ForegroundColor Green
+        Write-Host "Copying Installer : " -NoNewline
+
+        $Patches = "\\$Machine\c$\Patches\"
+        $InstallAgent = "\\$Machine\c$\Patches\Install_Agent.bat"
+
+        New-Item -ItemType Directory -Path $Patches -Force -ErrorAction Stop | Out-Null
+        Copy-Item $JKT -Destination $Patches -Force -ErrorAction Stop | Out-Null
+        If (Test-Path $InstallAgent) { Write-host "SUCCESS" -ForegroundColor Green  }
+        Elseif (!(Test-Path $InstallAgent)) { Write-Host "FAILED" -ForegroundColor Red }
+    }
+
+    ElseIf ($Machine -match '^RAP')
     {
         Write-Host "Jakarta" -ForegroundColor Green
         Write-Host "Copying Installer : " -NoNewline
@@ -468,330 +486,238 @@ Function Function_Three
 
 Function Function_Four
 {
-    Foreach ($machine in $machinelist)
+    $Input_restart = Read-Host "Stop DLP Agent Service Now? (y/n)"
+    switch ($Input_restart) 
     {
-        Get-PSSession | Remove-PSSession
-        $pathpf = "\\$machine\c$\Program Files\Manufacturer\Endpoint Agent"
-        $pathpf86 = "\\$machine\c$\Program Files (x86)\Manufacturer\Endpoint Agent"
-
-        Write-Host $machine -ForegroundColor Yellow
-        Write-Host "Checking service_shutdown.exe location : " -NoNewline
-
-        If (Test-Path -Path $pathpf)
+        'y'
         {
-            Write-Host "Folder exist at Program Files\Manufacturer\Endpoint Agent\Program Files\Manufacturer\Endpoint Agent" -ForegroundColor Green
-            Write-Host "Copying service_shutdown.exe to Program Files\Manufacturer: " -NoNewline
-            Try { Copy-Item -Path $Location -Destination "\\$machine\c$\Program Files\Manufacturer\Endpoint Agent\" -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
-            Catch { Write-Warning ($_); Write-Host "`n"; Continue }
-            Finally { $Error.Clear() }
-
-            Write-Host "Establishing remote connection to $machine : "  -NoNewline
-            Try { $MySession = New-PSSession -ComputerName $machine -Credential $Cred -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
-            Catch { Write-Host "Failed" -ForegroundColor Red; Write-Host "`n"; Continue }
-            Finally { $Error.Clear() }
-            $MyCommands = 
+            $Machinelist = @(get-content -Path "$ScriptDir\Machinelist.txt")
+            Foreach ($Machine in $Machinelist)
             {
-                Write-Host "Executing service_shutdown.exe : "  -NoNewline
-                Try { cd "C:\Program Files\Manufacturer\Endpoint Agent" -ErrorAction Stop } Catch { }
-                cmd.exe /c "service_shutdown.exe -p=Welcome1" | Out-Null 2>$null
+                Write-Host "`n"
+                #region Check PSSession Connection
+                Write-Host "Establishing remote connection to $machine : "  -NoNewline
+                Try { $MySession = New-PSSession -ComputerName $machine -Credential $Cred -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
+                Catch { Write-Host "Failed" -ForegroundColor Red; Write-Host "`n"; Continue }
+                #endregion Check PSSession Connection
 
-                $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State
-                $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State
+                #region Stop EDPA & WDPA by running service_shutdown.exe
+                Write-Host "Stopping EDPA & WDP Services : " -NoNewline
 
-                If (($Edpa -eq "Stopped") -and ($Wdp -eq "Stopped") )
+                Try { Copy-Item -Path $Location -Destination "\\$machine\c$\Program Files\Manufacturer\Endpoint Agent\" -ErrorAction Stop } Catch {}
+                Try { Copy-Item -Path $Location -Destination "\\$machine\c$\Program Files\Manufacturer (x86)\Endpoint Agent\" -ErrorAction Stop } Catch {}
+
+                $MyCommands = 
                 {
-                    Write-Host "SUCCESS" -ForegroundColor Green
+                    Try { cd "C:\Program Files\Manufacturer\Endpoint Agent" -ErrorAction Stop } Catch { }
+                    cmd.exe /c "service_shutdown.exe -p=Welcome1" > $null 2>&1
+                    Try { cd "C:\Program Files (x86)\Manufacturer\Endpoint Agent" -ErrorAction Stop } Catch { }
+                    cmd.exe /c "service_shutdown.exe -p=Welcome1" > $null 2>&1
+
+                    $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State; $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State
+
+                    If (($Edpa -eq "Stopped") -and ($Wdp -eq "Stopped") ) { Write-Host "Both service is now stopped." -ForegroundColor Green }
+                    ElseIf (!($Edpa) -and !($Wdp)) { Write-Host "Both service is not exist." -ForegroundColor Green }
+                    Else {Write-Host "Failed to stop service."}
                 }
 
-                ElseIf (($Edpa -eq "Running") -or ($Wdp -eq "Running") )
-                {
-                    Write-Host "Failed. Services still running" -ForegroundColor Red
-                }
-
-                ElseIf (($Edpa -eq "Running") -or ($Wdp -eq "Running") )
-                {
-                    Write-Host "Services it not exist" -ForegroundColor Green
-                }
+                Invoke-Command -Session $MySession -ScriptBlock $MyCommands
+                
+            #endregion Stop EDPA & WDPA by running service_shutdown.exe
             }
-
-            Invoke-Command -Session $MySession -ScriptBlock $MyCommands -ErrorAction Stop
         }
 
-        Elseif (Test-Path -Path $pathpf86)
-        {
-            Write-Host "Folder exist at Program Files (x86)\Manufacturer\Endpoint Agent\Program Files\Manufacturer\Endpoint Agent" -ForegroundColor Green
-            Write-Host "Copying service_shutdown.exe to Program Files (x86)\Manufacturer: " -NoNewline
-            Try { Copy-Item -Path $Location -Destination "\\$machine\c$\Program Files (x86)\Manufacturer\Endpoint Agent\" -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
-            Catch { Write-Warning ($_); Write-Host "`n"; Continue }
-            Finally { $Error.Clear() }
-
-            Write-Host "Establishing remote connection to $machine : "  -NoNewline
-            Try { $MySession = New-PSSession -ComputerName $machine -Credential $Cred -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
-            Catch { Write-Host "Failed" -ForegroundColor Red; Write-Host "`n"; Continue }
-            Finally { $Error.Clear() }
-            $MyCommands = 
-            {
-                Write-Host "Executing service_shutdown.exe : "  -NoNewline
-                Try { cd "C:\Program Files (x86)\Manufacturer\Endpoint Agent" -ErrorAction Stop } Catch { }
-                cmd.exe /c "service_shutdown.exe -p=Welcome1" | Out-Null 2>$null
-
-                $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State
-                $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State
-
-                If (($Edpa -eq "Stopped") -and ($Wdp -eq "Stopped") )
-                {
-                    Write-Host "SUCCESS" -ForegroundColor Green
-                }
-
-                ElseIf (($Edpa -eq "Running") -or ($Wdp -eq "Running") )
-                {
-                    Write-Host "Failed. Services still running" -ForegroundColor Red
-                }
-
-                ElseIf (($Edpa -eq "Running") -or ($Wdp -eq "Running") )
-                {
-                    Write-Host "Services it not exist" -ForegroundColor Green
-                }
-            }
-            Invoke-Command -Session $MySession -ScriptBlock $MyCommands -ErrorAction Stop
+        'n' 
+        { 
+            Continue
         }
+
+        Default { Write-Warning "Invalid Input" }
     }
 }
 
 Function Function_Five
 {
-$Input_restart = Read-Host "Uninstall DLP Agent Now? (y/n)"
- switch ($Input_restart) 
- {
-    'y'
-     {
-        Foreach ($machine in $machinelist)
+    $Input_restart = Read-Host "Uninstall DLP Agent Now? (y/n)"
+    switch ($Input_restart) 
     {
-        Get-PSSession | Remove-PSSession
-        Write-Host "`n"
-        $pathpf = "\\$machine\c$\Program Files\Manufacturer\Endpoint Agent\"
-        $pathpf86 = "\\$machine\c$\Program Files (x86)\Manufacturer\Endpoint Agent\"
-
-        Write-Host $machine -ForegroundColor Yellow
-        Write-Host "Checking service_shutdown.exe location : " -NoNewline
-
-        If (Test-Path -Path $pathpf)
+        'y'
         {
-            Write-Host "Folder exist at Program Files" -ForegroundColor Green
-            Write-Host "Copying service_shutdown.exe to Program Files\Manufacturer\Endpoint Agent\: " -NoNewline
-            Try { Copy-Item -Path $Location -Destination "\\$machine\c$\Program Files\Manufacturer\Endpoint Agent\" -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
-            Catch { Write-Warning ($_); Write-Host "`n"; Continue }
-            Finally { $Error.Clear() }
-
-            Write-Host "Establishing remote connection to $machine : "  -NoNewline
-            Try { $MySession = New-PSSession -ComputerName $machine -Credential $Cred -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
-            Catch { Write-Host "Failed" -ForegroundColor Red; Write-Host "`n"; Continue }
-            Finally { $Error.Clear() }
-            $MyCommands = 
+            $Machinelist = @(get-content -Path "$ScriptDir\Machinelist.txt")
+            Foreach ($Machine in $Machinelist)
             {
+                Write-Host "`n"
+                #region Check PSSession Connection
+                Write-Host "Establishing remote connection to $machine : "  -NoNewline
+                Try { $MySession = New-PSSession -ComputerName $machine -Credential $Cred -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
+                Catch { Write-Host "Failed" -ForegroundColor Red; Write-Host "`n"; Continue }
+                #endregion Check PSSession Connection
 
-                 Function Uninstall_Agent
-                 {
-                            Write-Host "Stopping EDPA and WDP Service : " -NoNewline
-                            cd "C:\Program Files\Manufacturer\Endpoint Agent"
-                            cmd.exe /c "service_shutdown.exe -p=Welcome1" | Out-Null
+                #region Stop EDPA & WDPA by running service_shutdown.exe
+                Write-Host "Stopping EDPA & WDP Services : " -NoNewline
 
-                            $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State
-                            $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State
+                Try { Copy-Item -Path $Location -Destination "\\$machine\c$\Program Files\Manufacturer\Endpoint Agent\" -ErrorAction Stop } Catch {}
+                Try { Copy-Item -Path $Location -Destination "\\$machine\c$\Program Files\Manufacturer (x86)\Endpoint Agent\" -ErrorAction Stop } Catch {}
 
-                            If (($Edpa -eq "Stopped") -and ($Wdp -eq "Stopped") )
-                            {
-                            Write-Host "SUCCESS" -ForegroundColor Green
-                            }
-
-                            Else 
-                            {
-                                Write-Host "Stop Service failed but the force uninstallation will continue anyway" -ForegroundColor Green
-                            }
-                        
-                            Write-Host "Executing clean_agent.exe : " -NoNewline
-                            cd "C:\Patches"
-                            cmd.exe /c "echo y | clean_agent.exe -p=Welcome1" | Out-Null
-
-                            $Edpa = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*EDPA*") }).State; $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State; $StatusE = $Edpa; $StatusW = $Wdp
-                            $Ice = "C:\Program Files\Manufacturer\Endpoint Agent\ICE.exe"
-
-                            If ((Test-Path $Ice) -or ($StatusE) )
-                            {
-                                Write-Host "Uninstallation still not completed" -ForegroundColor Red
-                            }
-
-                            If ((!(Test-Path $Ice)) -and ($StatusE -eq $null) -and ($StatusW -eq $null) ) 
-                            {
-                                Write-Host "Uninstallation is completed" -ForegroundColor Green
-                                Install_Agent
-                            }
-                        }
-
-                Write-Host "Executing service_shutdown.exe : "  -NoNewline
-                Try { cd "C:\Program Files\Manufacturer\Endpoint Agent" -ErrorAction Stop } Catch { }
-                cmd.exe /c "service_shutdown.exe -p=Welcome1" | Out-Null 2>$null
-
-                $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State
-                $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State
-
-                If (($Edpa -eq "Stopped") -and ($Wdp -eq "Stopped") )
+                $MyCommands = 
                 {
-                    Write-Host "SUCCESS. Force Uninstallation will continue now" -ForegroundColor Green
+                    Try { cd "C:\Program Files\Manufacturer\Endpoint Agent" -ErrorAction Stop } Catch { }
+                    cmd.exe /c "service_shutdown.exe -p=Welcome1" > $null 2>&1
+                    Try { cd "C:\Program Files (x86)\Manufacturer\Endpoint Agent" -ErrorAction Stop } Catch { }
+                    cmd.exe /c "service_shutdown.exe -p=Welcome1" > $null 2>&1
+
+                    $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State; $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State
+
+                    If (($Edpa -eq "Stopped") -and ($Wdp -eq "Stopped") ) { Write-Host "Both service is now stopped. Uninstallation will continue now" -ForegroundColor Green }
+                    ElseIf (!($Edpa) -and !($Wdp)) { Write-Host "Both service is not exist. Uninstallation will continue now" -ForegroundColor Green }
+                    Else {Write-Host "Failed to stop service. Uninstallation will continue anyway"}
                 }
 
-                ElseIf (($Edpa -eq "Running") -or ($Wdp -eq "Running") )
-                {
-                    Write-Host "Failed. Services still running. Force Uninstallation will continue anyway" -ForegroundColor Green
-                }
+                Invoke-Command -Session $MySession -ScriptBlock $MyCommands
+                
+            #endregion Stop EDPA & WDPA by running service_shutdown.exe
 
-                ElseIf (($Edpa -eq "Running") -or ($Wdp -eq "Running") )
-                {
-                    Write-Host "Services it not exist. Force Uninstallation will continue anyway" -ForegroundColor Green
+                #region Executing clean_agent.exe
+                Write-Host "Executing clean_agent.exe : " -NoNewline
 
-                }
-
-                Write-Host "Checking OS Architecture : " -NoNewline
-                Try { $OS = (Get-WmiObject Win32_OperatingSystem).OsArchitecture; Write-Host "$OS" -ForegroundColor Green }
-                Catch { Write-Warning ($_); Continue }
-                Finally { $Error.Clear() }
-
-                #Transferring clean_agent.exe
-                Write-Host "Transferring clean_agent.exe to C:\Patches : " -NoNewline
+                Try { $OS = (Get-WmiObject Win32_OperatingSystem -ErrorAction Stop).OsArchitecture } Catch { } Finally { $Error.Clear() }
+                
                 $Path = "\\$machine\c$\Patches\"
                 $Source64 = "$ScriptDir\x64\clean_agent.exe"
                 $Source32 = "$ScriptDir\x86\clean_agent.exe"
-                If ($OS -eq "64-bit")
+
+                If ($OS -eq "64-bit") { Try { Copy-Item $Source64 -Destination $Path -Force -Recurse -ErrorAction Stop } Catch { } }
+                ElseIf ($OS -eq "32-bit") { Try { Copy-Item $Source32 -Destination $Path -Force -Recurse -ErrorAction Stop } Catch { } }
+
+                $MyCommands2 =
                 {
-                    Try { New-Item -ItemType Directory -Path $Path -Force -ErrorAction Stop } Catch {  }
-                    Try { Copy-Item $Source64 -Destination $Path -Force -Recurse -ErrorAction Stop } Catch { }
-                    If (Test-Path -Path "C:\Patches\clean_agent.exe") { Write-Host "SUCCESS" -ForegroundColor Green } Else { Write-Host "Failed" -ForegroundColor Red; Continue }
-
-                    Write-Host "Executing clean_agent.exe : " -NoNewline
                     Try { cd "C:\Patches" -ErrorAction Stop } Catch { }
-                    cmd.exe /c "echo y | clean_agent.exe -p=Welcome1" | Out-Null
-
-                    #Checking Installation Status by checking the services
-                    $Edpa = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*EDPA*") }).State; $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State; $StatusE = $Edpa; $StatusW = $Wdp
-                    $Ice = "C:\Program Files\Manufacturer\Endpoint Agent\ICE.exe"
-                    If ((Test-Path $Ice) -or ($StatusE) )
-                    {
-                        Write-Host "Uninstallation is not complete" -ForegroundColor Red
-                        Write-Host "Uninstallation will be continue for the 2nd time"
-                        Uninstall_Agent
-                    }
-
-                    If ((!(Test-Path $Ice)) -and ($StatusE -eq $null) -and ($StatusW -eq $null) ) 
-                    {
-                        Write-Host "Uninstallation is completed" -ForegroundColor Green
-                    }
+                    cmd.exe /c "echo y | clean_agent.exe -p=Welcome1" #> $null 2>&1
                 }
 
-                ElseIf ($OS -eq "32-bit")
+                Invoke-Command -Session $MySession -ScriptBlock $MyCommands2
+                #endregion Executing clean_agent.exe
+
+                #region Try to Uninstall using msiexec /x method
+                $MyCommands3 = 
                 {
-                    Try { New-Item -ItemType Directory -Path $Path -Force -ErrorAction Stop } Catch {  }
-                    Try { Copy-Item $Source32 -Destination $Path -Force -Recurse -ErrorAction Stop } Catch { }
-                    If (Test-Path -Path "C:\Patches\clean_agent.exe") { Write-Host "SUCCESS" -ForegroundColor Green } Else { Write-Host "Failed" -ForegroundColor Red; Continue }
+                    Write-Host "Perform uninstallation using msiexec method and remove leftover : " -NoNewline
 
-                    Write-Host "Executing clean_agent.exe : " -NoNewline
-                    Try { cd "C:\Patches" -ErrorAction Stop } Catch { }
-                    cmd.exe /c "echo y | clean_agent.exe -p=Welcome1" | Out-Null
+                    $Path1 = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" > $null 2>&1
+                    $Installed1 = Get-ChildItem -Path $Path1 | ForEach { Get-ItemProperty $_.PSPath } | Where-Object { ($_.DisplayName -like "*AgentInstall*") -and ($_.Publisher -like "*Symantec Corp*") } > $null 2>&1
+                    $String1 = ($Installed1).UninstallString > $null 2>&1
+                    $Path2 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall" > $null 2>&1
+                    $Installed2 = Get-ChildItem -Path $Path2 | ForEach { Get-ItemProperty $_.PSPath } | Where-Object { ($_.DisplayName -like "*AgentInstall*") -and ($_.Publisher -like "*Symantec Corp*") } > $null 2>&1
+                    $String2 = ($Installed2).UninstallString > $null 2>&1
 
-                    #Checking Installation Status by checking the services
-                    $Edpa = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*EDPA*") }).State; $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State; $StatusE = $Edpa; $StatusW = $Wdp
-                    $Ice = "C:\Program Files (x86)\Manufacturer\Endpoint Agent\ICE.exe"
-                    If ((Test-Path $Ice) -or ($StatusE) )
-                    {
-                        Write-Host "Uninstallation is not complete" -ForegroundColor Red
-                        Write-Host "Uninstallation will be continue for the 2nd time"
-                        Uninstall_Agent
+                    If ($String1) 
+                    { 
+                        Write-Host "$String1" -ForegroundColor Green
+                        Write-Host "Uninstalling DLP : " -NoNewline
+                        cmd.exe /c "$String1 /q UNINSTALLPASSWORD=Welcome1" > $null 2>&1
+                        Write-Host "Done" -ForegroundColor Green
+
                     }
 
-                    If ((!(Test-Path $Ice)) -and ($StatusE -eq $null) -and ($StatusW -eq $null) ) 
+                    ElseIf ($String2) 
+                    { 
+                        Write-Host "$String2" -ForegroundColor Green
+                        Write-Host "Uninstalling DLP : " -NoNewline
+                        cmd.exe /c "$String2 /q UNINSTALLPASSWORD=Welcome1" > $null 2>&1
+                        Write-Host "Done" -ForegroundColor Green
+                    }
+
+                    Else
                     {
-                        Write-Host "Uninstallation is completed" -ForegroundColor Green
+                        Write-Host "Done" -ForegroundColor Green
+                    }
+
+
+     
+                }
+
+                Invoke-Command -Session $MySession -ScriptBlock $MyCommands3
+                #endregion Try to Uninstall using msiexec /x method
+
+                #region Checking status after uninstallation
+                Write-Host "Checking Uninstallation Status : " -NoNewline
+                $MyCommands4 =
+                {
+
+                    $PathVersion = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+                    $PathVersion2 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+                    $Installed1 = Get-ChildItem -Path $PathVersion | ForEach { Get-ItemProperty $_.PSPath } | Where-Object { ($_.DisplayName -like "*AgentInstall*") -and ($_.Publisher -like "*Symantec Corp*") }
+                    $Installed2 = Get-ChildItem -Path $PathVersion2 | ForEach { Get-ItemProperty $_.PSPath } | Where-Object { ($_.DisplayName -like "*AgentInstall*") -and ($_.Publisher -like "*Symantec Corp*") }
+
+                    If ($Installed1) { $Version = ($Installed1).Displayversion }
+                    ElseIf ($Installed2) { $Version = ($Installed2).Displayversion }
+                    Else { $Version = "False" }
+
+                    # Check vfsmfd.sys, vnwcd.sys and vrtam.sys
+                    $Path1 = "C:\Windows\System32\drivers\vfsmfd.sys"; $Path2 = "C:\Windows\System32\drivers\vnwcd.sys"; $Path3 = "C:\Windows\System32\drivers\vrtam.sys";
+                    If (Test-Path -Path $Path1) { $vfsmfd = "True" } Else { $vfsmfd = "False" }
+                    If (Test-Path -Path $Path2) { $vnwcd = "True" } Else { $vnwcd = "False" }
+                    If (Test-Path -Path $Path3) { $vrtam = "True" } Else { $vrtam = "False" }
+
+                    # Check log file
+                    $logfile1 = "C:\Program Files\Manufacturer\Endpoint Agent\edpa0.log"; $logfile2 = "C:\Program Files\Manufacturer\Endpoint Agent\edpa_ext0.log"; $Folder1 = "C:\Program Files\Manufacturer\Endpoint Agent"
+
+                    If (Test-Path -Path $logfile1) { $edpa1 = "True" } Else { $edpa1 = "False" }
+                    If (Test-Path -Path $logfile2) { $edpa2 = "True" } Else { $edpa2 = "False" }
+
+                    # Check Services
+                    $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State; $Wdp = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*WDP*") }).State; $StatusE = $Edpa; $StatusW = $Wdp
+                    If ($StatusE -like "*running*") { $ServiceStateE = "Running" } ElseIf ($StatusE -like "*Stopped*") { $ServiceStateE = "Stopped" } ElseIf ($StatusE -eq $null) { $ServiceStateE = "False" }
+                    If ($StatusW -like "*running*") { $ServiceStateW = "Running" } ElseIf ($StatusW -like "*Stopped*") { $ServiceStateW = "Stopped" } ElseIf ($StatusW -eq $null) { $ServiceStateW = "False" }
+
+                    [PSCustomObject]@{
+                        Machine   = $env:COMPUTERNAME
+                        Version        = $Version
+                        'vfsmfd.sys'   = $vfsmfd
+                        'vnwcd.sys'    = $vnwcd
+                        'vrtam.sys'    = $vrtam
+                        'edpa0.log'    = $edpa1
+                        'edpa_ext0.log'= $edpa2
+                        'EDPA Service' = $ServiceStateE
+                        'WDP Service'  = $ServiceStateW
+                        Status         = 'Success'
                     }
                 }
-            
+                $results = Invoke-Command -Session $MySession -ScriptBlock $MyCommands4
+                $results | Select-Object Machine, Status, Version, vfsmfd.sys, vnwcd.sys, vrtam.sys, 'edpa0.log', 'edpa_ext0.log', 'EDPA Service', 'WDP Service' | Format-Table -AutoSize
+                #endregion Checking status after uninstallation
+
+                #region Restart
+                $Input_restart = Read-Host "Server need to restart after uninstallation. Do you want to restart the server now? (y/n)"
+                switch ($Input_restart)
+                {
+                    'y'
+                    {
+                        Write-Host "Restarting $Machine : " -NoNewline
+                        Try { Restart-Computer -ComputerName $Machine -Credential $cred -Force -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
+                        Catch { Write-Warning ($_); Continue }
+                        Finally { $Error.Clear() }
+                    }
+
+                    'n'
+                    {
+                        Continue
+                    }
+
+                    Default { Write-Warning "Invalid Input" }
+
+                }
+                #endregion Restart
             }
-
-            Invoke-Command -Session $MySession -ScriptBlock $MyCommands -ErrorAction Stop
         }
 
-        Elseif (Test-Path -Path $pathpf86)
-        {
-            Write-Host "Folder exist at Program Files (x86)" -ForegroundColor Green
-            Write-Host "Copying service_shutdown.exe to Program Files (x86)\Manufacturer\Endpoint Agent\: " -NoNewline
-            Try { Copy-Item -Path $Location -Destination "\\$machine\c$\Program Files (x86)\Manufacturer\Endpoint Agent\" -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
-            Catch { Write-Warning ($_); Write-Host "`n"; Continue }
-            Finally { $Error.Clear() }
-
-            Write-Host "Establishing remote connection to $machine : "  -NoNewline
-            Try { $MySession = New-PSSession -ComputerName $machine -Credential $Cred -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
-            Catch { Write-Host "Failed" -ForegroundColor Red; Write-Host "`n"; Continue }
-            Finally { $Error.Clear() }
-            $MyCommands = 
-            {
-                Write-Host "Executing service_shutdown.exe : "  -NoNewline
-                Try { cd "C:\Program Files (x86)\Manufacturer\Endpoint Agent" -ErrorAction Stop } Catch { }
-                cmd.exe /c "service_shutdown.exe -p=Welcome1" | Out-Null 2>$null
-
-                $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State
-                $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State
-
-                If (($Edpa -eq "Stopped") -and ($Wdp -eq "Stopped") )
-                {
-                    Write-Host "SUCCESS. Force Uninstallation will continue now" -ForegroundColor Green
-                }
-
-                ElseIf (($Edpa -eq "Running") -or ($Wdp -eq "Running") )
-                {
-                    Write-Host "Failed. Services still running. Force Uninstallation will continue anyway" -ForegroundColor Green
-                }
-
-                ElseIf (($Edpa -eq "Running") -or ($Wdp -eq "Running") )
-                {
-                    Write-Host "Services it not exist. Force Uninstallation will continue anyway" -ForegroundColor Green
-
-                }
-
-                Write-Host "Checking OS Architecture : " -NoNewline
-                Try { $OS = (Get-WmiObject Win32_OperatingSystem).OsArchitecture; Write-Host "$OS" -ForegroundColor Green }
-                Catch { Write-Warning ($_); Continue }
-                Finally { $Error.Clear() }
-
-                #Transferring clean_agent.exe
-                Write-Host "Transferring clean_agent.exe to C:\Patches : " -NoNewline
-                $Path = "\\$machine\c$\Patches\"
-                $Source64 = "$ScriptDir\x64\clean_agent.exe"
-                $Source32 = "$ScriptDir\x86\clean_agent.exe"
-                If ($OS -eq "32-bit")
-                {
-                    Try { New-Item -ItemType Directory -Path $Path -Force -ErrorAction Stop } Catch {  }
-                    Try { Copy-Item $Source32 -Destination $Path -Force -Recurse -ErrorAction Stop } Catch { }
-                    If (Test-Path -Path "C:\Patches\clean_agent.exe") { Write-Host "SUCCESS" -ForegroundColor Green } Else { Write-Host "Failed" -ForegroundColor Red; Continue }
-                }
-
-                ElseIf ($OS -eq "32-bit")
-                {
-                    Try { New-Item -ItemType Directory -Path $Path -Force -ErrorAction Stop } Catch {  }
-                    Try { Copy-Item $Source32 -Destination $Path -Force -Recurse -ErrorAction Stop } Catch { }
-                    If (Test-Path -Path "C:\Patches\clean_agent.exe") { Write-Host "SUCCESS" -ForegroundColor Green } Else { Write-Host "Failed" -ForegroundColor Red; Continue }
-                }
-
-            }
-            Invoke-Command -Session $MySession -ScriptBlock $MyCommands -ErrorAction Stop
+        'n' 
+        { 
+            Continue
         }
-    }
-     }
 
-     'n' 
-     { 
-        Continue
-     }
-     Default { Write-Warning "Invalid Input" }
+        Default { Write-Warning "Invalid Input" }
     }
-    
 }
 
 Function Function_Six
@@ -845,7 +771,7 @@ $Input_restart = Read-Host "Reinstall DLP Agent Now? (y/n)"
                         {
                             Write-Host "Executing install_agent.bat : " -NoNewline
                             cd "C:\Patches"
-                            cmd.exe /c "install_agent.bat" | Out-Null
+                            cmd.exe /c "install_agent.bat" hg st 2>&1 | Out-Null
 
                             $Path1 = "C:\Windows\System32\drivers\vfsmfd.sys"; $Path2 = "C:\Windows\System32\drivers\vnwcd.sys"; $Path3 = "C:\Windows\System32\drivers\vrtam.sys"
                             $logfile1 = "C:\Program Files\Manufacturer\Endpoint Agent\edpa0.log"; $logfile2 = "C:\Program Files\Manufacturer\Endpoint Agent\edpa_ext0.log"; $Folder1 = "C:\Program Files\Manufacturer\Endpoint Agent"
@@ -861,7 +787,7 @@ $Input_restart = Read-Host "Reinstall DLP Agent Now? (y/n)"
 
                             Else 
                             {
-                                Write-Host "Installation is not completed. Please generate the report using option 8" -ForegroundColor Red
+                                Write-Host "Installation is not completed. Please rename 'Group Policy folder and try again'" -ForegroundColor Red
                             }
                         }
 
@@ -869,7 +795,7 @@ $Input_restart = Read-Host "Reinstall DLP Agent Now? (y/n)"
                         {
                             Write-Host "Stopping EDPA and WDP Service : " -NoNewline
                             cd "C:\Program Files\Manufacturer\Endpoint Agent"
-                            cmd.exe /c "service_shutdown.exe -p=Welcome1" | Out-Null
+                            cmd.exe /c "service_shutdown.exe -p=Welcome1" hg st *> $null
 
                             $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State
                             $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State
@@ -886,7 +812,7 @@ $Input_restart = Read-Host "Reinstall DLP Agent Now? (y/n)"
                         
                             Write-Host "Executing clean_agent.exe : " -NoNewline
                             cd "C:\Patches"
-                            cmd.exe /c "echo y | clean_agent.exe -p=Welcome1" | Out-Null
+                            cmd.exe /c "echo y | clean_agent.exe" hg st 2>&1 | Out-Null
 
                             $Edpa = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*EDPA*") }).State; $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State; $StatusE = $Edpa; $StatusW = $Wdp
                             $Ice = "C:\Program Files\Manufacturer\Endpoint Agent\ICE.exe"
@@ -905,8 +831,9 @@ $Input_restart = Read-Host "Reinstall DLP Agent Now? (y/n)"
 
                         Write-Host "Stopping EDPA and WDP Service : " -NoNewline
                         Try { cd "C:\Program Files\Manufacturer\Endpoint Agent" -ErrorAction Stop} Catch { }  
-                        cmd.exe /c "service_shutdown.exe -p=Welcome1" 2>$null
-                        
+                        cmd.exe /c "service_shutdown.exe -p=Welcome1" hg st 2>&1 | Out-Null
+                        Try { cd "C:\Program Files (x86)\Manufacturer\Endpoint Agent" -ErrorAction Stop} Catch { }
+                        cmd.exe /c "service_shutdown.exe -p=Welcome1" hg st 2>&1 | Out-Null
      
                         $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State
                         $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State
@@ -922,16 +849,15 @@ $Input_restart = Read-Host "Reinstall DLP Agent Now? (y/n)"
                         
                         Write-Host "Executing clean_agent.exe : " -NoNewline
                         Try { cd "C:\Patches" -ErrorAction Stop } Catch { }
-                        cmd.exe /c "echo y | clean_agent.exe -p=Welcome1" 2>$null
+                        cmd.exe /c "echo y | clean_agent.exe"
 
                         #Checking Installation Status by checking the services
                         $Edpa = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*EDPA*") }).State; $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State; $StatusE = $Edpa; $StatusW = $Wdp
                         $Ice = "C:\Program Files\Manufacturer\Endpoint Agent\ICE.exe"
                         If ((Test-Path $Ice) -or ($StatusE) )
                         {
-                            Write-Host "Uninstallation is not complete" -ForegroundColor Red
-                            Write-Host "Uninstallation will be continue for the 2nd time"
-                            Uninstall_Agent
+                            Write-Host "Uninstallation is not complete. Please restart the server and try again option (6)" -ForegroundColor Red
+                            Continue
 
                         }
 
@@ -970,7 +896,7 @@ $Input_restart = Read-Host "Reinstall DLP Agent Now? (y/n)"
                         {
                             Write-Host "Executing install_agent.bat : " -NoNewline
                             cd "C:\Patches"
-                            cmd.exe /c "install_agent.bat" | Out-Null
+                            cmd.exe /c "install_agent.bat" hg st 2>&1 | Out-Null
 
                             $Path1 = "C:\Windows\System32\drivers\vfsmfd.sys"; $Path2 = "C:\Windows\System32\drivers\vnwcd.sys"; $Path3 = "C:\Windows\System32\drivers\vrtam.sys"
                             $logfile1 = "C:\Program Files\Manufacturer\Endpoint Agent\edpa0.log"; $logfile2 = "C:\Program Files\Manufacturer\Endpoint Agent\edpa_ext0.log"; $Folder1 = "C:\Program Files\Manufacturer\Endpoint Agent"
@@ -994,7 +920,7 @@ $Input_restart = Read-Host "Reinstall DLP Agent Now? (y/n)"
                         {
                             Write-Host "Stopping EDPA and WDP Service : " -NoNewline
                             cd "C:\Program Files\Manufacturer\Endpoint Agent"
-                            cmd.exe /c "service_shutdown.exe -p=Welcome1" | Out-Null
+                            cmd.exe /c "service_shutdown.exe -p=Welcome1" hg st 2>&1 | Out-Null
 
                             $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State
                             $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State
@@ -1011,14 +937,14 @@ $Input_restart = Read-Host "Reinstall DLP Agent Now? (y/n)"
                         
                             Write-Host "Executing clean_agent.exe : " -NoNewline
                             cd "C:\Patches"
-                            cmd.exe /c "echo y | clean_agent.exe -p=Welcome1" | Out-Null
+                            cmd.exe /c "echo y | clean_agent.exe" hg st 2>&1 | Out-Null
 
                             $Edpa = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*EDPA*") }).State; $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State; $StatusE = $Edpa; $StatusW = $Wdp
                             $Ice = "C:\Program Files\Manufacturer\Endpoint Agent\ICE.exe"
 
                             If ((Test-Path $Ice) -or ($StatusE) )
                             {
-                                Write-Host "Uninstallation still not completed" -ForegroundColor Red
+                                Write-Host "Uninstallation still not completed. Please REBOOT and try again with option (6)" -ForegroundColor Red
                             }
 
                             If ((!(Test-Path $Ice)) -and ($StatusE -eq $null) -and ($StatusW -eq $null) ) 
@@ -1030,7 +956,7 @@ $Input_restart = Read-Host "Reinstall DLP Agent Now? (y/n)"
 
                         Write-Host "Stopping EDPA and WDP Service : " -NoNewline
                         cd "C:\Program Files\Manufacturer\Endpoint Agent"
-                        cmd.exe /c "service_shutdown.exe -p=Welcome1" | Out-Null
+                        cmd.exe /c "service_shutdown.exe -p=Welcome1" hg st 2>&1 | Out-Null
      
                         $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State
                         $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State
@@ -1046,17 +972,15 @@ $Input_restart = Read-Host "Reinstall DLP Agent Now? (y/n)"
                         
                         Write-Host "Executing clean_agent.exe : " -NoNewline
                         cd "C:\Patches"
-                        cmd.exe /c "echo y | clean_agent.exe -p=Welcome1" | Out-Null
+                        cmd.exe /c "echo y | clean_agent.exe" hg st 2>&1 | Out-Null
 
                         #Checking Installation Status by checking the services
                         $Edpa = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*EDPA*") }).State; $Wdp = (Get-WmiObject Win32_Service  | Where-Object { ($_.Name -like "*WDP*") }).State; $StatusE = $Edpa; $StatusW = $Wdp
                         $Ice = "C:\Program Files\Manufacturer\Endpoint Agent\ICE.exe"
                         If ((Test-Path $Ice) -or ($StatusE) )
                         {
-                            Write-Host "Uninstallation is not complete" -ForegroundColor Red
-                            Write-Host "Uninstallation will be continue for the 2nd time"
-                            Uninstall_Agent
-
+                            Write-Host "Uninstallation is not complete. Please restart the server and try again option (6)" -ForegroundColor Red
+                            Continue
                         }
 
                         If ((!(Test-Path $Ice)) -and ($StatusE -eq $null) -and ($StatusW -eq $null) ) 
@@ -1192,119 +1116,149 @@ $Input_restart = Read-Host "Reinstall DLP Agent Now? (y/n)"
 
 Function Function_Seven
 {
-    $Input_restart = Read-Host "Install DLP Agent now? (y/n)"
-    Write-Host "`n"
+$Input_restart = Read-Host "Install DLP Agent Now? (y/n)"
     switch ($Input_restart) 
     {
         'y'
-         {
-            Get-PSSession | Remove-PSSession
-    Foreach ($machine in $machinelist)
-    {
-        Write-Host "$machine" -ForegroundColor Yellow
-        $Source64 = "$ScriptDir\AgentInstaller_Win64\*"
-        $Source32 = "$ScriptDir\AgentInstaller_Win32\*"
-        $Destination = "\\$machine\c$\Patches"
-        Write-Host "Checking OS Architecture : " -NoNewline
-        Try { $OS = (Get-WmiObject Win32_OperatingSystem -ComputerName $machine).OsArchitecture; Write-Host "$OS" -ForegroundColor Green }
-        Catch { Write-Warning; Write-Host "Failed"; Continue }
-        Finally { $Error.Clear() }
-    
-        If ($OS -eq "64-bit")
         {
-            $PathtoC = "\\$machine\c$\patches"
-            if (Test-Path $PathtoC) 
-            {   
-                #Write-Host "Copying Installer to C:\Patches : " -NoNewline
-                #cmd.exe /c copy /z $Source64 $Destination | Out-Null
-                #Write-Host "Done" -ForegroundColor Green
-                Write-Host "Establishing remote connection to $machine : " -NoNewline
-                Try { $MySession2 = New-PSSession -ComputerName $machine -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
-                Catch { Write-Host "Failed" -ForegroundColor Red; Write-Host "`n"; Continue }
-                Finally { $Error.Clear() }
-
-                $MyCommands2 = 
-                { 
-                       
-                    Write-Host "Executing install_agent.bat : " -NoNewline
-                    cd "C:\Patches"
-                    cmd.exe /c "install_agent.bat" | Out-Null
-                    Write-Host "Done" -ForegroundColor Green
-                }
-                Invoke-Command -Session $MySession2 -ScriptBlock $MyCommands2 -ErrorAction Stop
-            }
-
-            Elseif (!(Test-Path $PathtoC))
+            $Machinelist = @(get-content -Path "$ScriptDir\Machinelist.txt")
+            Foreach ($Machine in $Machinelist)
             {
-                New-Item -ItemType Directory -Force -Path "$Destination" | Out-Null
-                Write-Host "Establishing remote connection to $machine : " -NoNewline
-                Try { $MySession2 = New-PSSession -ComputerName $machine -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
+                Write-Host "`n"
+                #region Check PSSession Connection
+                Write-Host "Establishing remote connection to $machine : "  -NoNewline
+                Try { $MySession = New-PSSession -ComputerName $machine -Credential $Cred -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
                 Catch { Write-Host "Failed" -ForegroundColor Red; Write-Host "`n"; Continue }
-                Finally { $Error.Clear() }
+                #endregion Check PSSession Connection
 
-                $MyCommands2 = 
-                {    
-                    
-                    Write-Host "Executing install_agent.bat : " -NoNewline
-                    cd "C:\Patches"
-                    cmd.exe /c "install_agent.bat" | Out-Null
-                    Write-Host "Done" -ForegroundColor Green
+                #region Executing clean_agent.exe
+                Write-Host "Executing clean_agent.exe : " -NoNewline
+
+                Try { $OS = (Get-WmiObject Win32_OperatingSystem -ErrorAction Stop).OsArchitecture } Catch { } Finally { $Error.Clear() }
+                
+                $Path = "\\$machine\c$\Patches\"
+                $Source64 = "$ScriptDir\x64\clean_agent.exe"
+                $Source32 = "$ScriptDir\x86\clean_agent.exe"
+
+                If ($OS -eq "64-bit") { Try { Copy-Item $Source64 -Destination $Path -Force -Recurse -ErrorAction Stop } Catch { } }
+                ElseIf ($OS -eq "32-bit") { Try { Copy-Item $Source32 -Destination $Path -Force -Recurse -ErrorAction Stop } Catch { } }
+
+                $MyCommands2 =
+                {
+                    Try { cd "C:\Patches" -ErrorAction Stop } Catch { }
+                    cmd.exe /c "echo y | clean_agent.exe -p=Welcome1" #> $null 2>&1
                 }
-                Invoke-Command -Session $MySession2 -ScriptBlock $MyCommands2 -ErrorAction Stop
+
+                Invoke-Command -Session $MySession -ScriptBlock $MyCommands2
+                #endregion Executing clean_agent.exe
+
+                #region Checking status after uninstallation
+                Write-Host "Checking Uninstallation Status : " -NoNewline
+                $MyCommands4 =
+                {
+
+                    $PathVersion = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+                    $PathVersion2 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+                    $Installed1 = Get-ChildItem -Path $PathVersion | ForEach { Get-ItemProperty $_.PSPath } | Where-Object { ($_.DisplayName -like "*AgentInstall*") -and ($_.Publisher -like "*Symantec Corp*") }
+                    $Installed2 = Get-ChildItem -Path $PathVersion2 | ForEach { Get-ItemProperty $_.PSPath } | Where-Object { ($_.DisplayName -like "*AgentInstall*") -and ($_.Publisher -like "*Symantec Corp*") }
+
+                    If ($Installed1) { $Version = ($Installed1).Displayversion }
+                    ElseIf ($Installed2) { $Version = ($Installed2).Displayversion }
+                    Else { $Version = "False" }
+
+                    # Check vfsmfd.sys, vnwcd.sys and vrtam.sys
+                    $Path1 = "C:\Windows\System32\drivers\vfsmfd.sys"; $Path2 = "C:\Windows\System32\drivers\vnwcd.sys"; $Path3 = "C:\Windows\System32\drivers\vrtam.sys";
+                    If (Test-Path -Path $Path1) { $vfsmfd = "True" } Else { $vfsmfd = "False" }
+                    If (Test-Path -Path $Path2) { $vnwcd = "True" } Else { $vnwcd = "False" }
+                    If (Test-Path -Path $Path3) { $vrtam = "True" } Else { $vrtam = "False" }
+
+                    # Check log file
+                    $logfile1 = "C:\Program Files\Manufacturer\Endpoint Agent\edpa0.log"; $logfile2 = "C:\Program Files\Manufacturer\Endpoint Agent\edpa_ext0.log"; $Folder1 = "C:\Program Files\Manufacturer\Endpoint Agent"
+
+                    If (Test-Path -Path $logfile1) { $edpa1 = "True" } Else { $edpa1 = "False" }
+                    If (Test-Path -Path $logfile2) { $edpa2 = "True" } Else { $edpa2 = "False" }
+
+                    # Check Services
+                    $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State; $Wdp = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*WDP*") }).State; $StatusE = $Edpa; $StatusW = $Wdp
+                    If ($StatusE -like "*running*") { $ServiceStateE = "Running" } ElseIf ($StatusE -like "*Stopped*") { $ServiceStateE = "Stopped" } ElseIf ($StatusE -eq $null) { $ServiceStateE = "False" }
+                    If ($StatusW -like "*running*") { $ServiceStateW = "Running" } ElseIf ($StatusW -like "*Stopped*") { $ServiceStateW = "Stopped" } ElseIf ($StatusW -eq $null) { $ServiceStateW = "False" }
+
+                    [PSCustomObject]@{
+                        Machine   = $env:COMPUTERNAME
+                        Version        = $Version
+                        'vfsmfd.sys'   = $vfsmfd
+                        'vnwcd.sys'    = $vnwcd
+                        'vrtam.sys'    = $vrtam
+                        'edpa0.log'    = $edpa1
+                        'edpa_ext0.log'= $edpa2
+                        'EDPA Service' = $ServiceStateE
+                        'WDP Service'  = $ServiceStateW
+                        Status         = 'Success'
+                    }
+                }
+                $results = Invoke-Command -Session $MySession -ScriptBlock $MyCommands4
+                $results | Select-Object Machine, Status, Version, vfsmfd.sys, vnwcd.sys, vrtam.sys, 'edpa0.log', 'edpa_ext0.log', 'EDPA Service', 'WDP Service' | Format-Table -AutoSize
+                #endregion Checking status after uninstallation
+
+                #region Installation
+                $Input_restart = Read-Host "Do you want to Install DLP Agent Now? (y/n)"
+                switch ($Input_restart)
+                {
+                    'y'
+                    {
+                        $MyCommands5 =
+                        {
+                            Write-Host "Executing install_agent.bat : " -NoNewline
+                            Try { cd "C:\Patches" -ErrorAction Stop } Catch{} 
+                            cmd.exe /c "install_agent.bat" > $null 2>&1
+                            
+                            $Path1 = "C:\Windows\System32\drivers\vfsmfd.sys"; $Path2 = "C:\Windows\System32\drivers\vnwcd.sys"; $Path3 = "C:\Windows\System32\drivers\vrtam.sys"
+                            $logfile1 = "C:\Program Files\Manufacturer\Endpoint Agent\edpa0.log"; $logfile2 = "C:\Program Files\Manufacturer\Endpoint Agent\edpa_ext0.log"; $Folder1 = "C:\Program Files\Manufacturer\Endpoint Agent"
+                            $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State; $Wdp = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*WDP*") }).State; $StatusE = $Edpa; $StatusW = $Wdp
+
+                            If ($Edpa -eq "Running") { $Edparun }
+                            If ($Wdp -eq "Running") { $Wdprun }
+
+                            If ((Test-Path $Path1) -and (Test-Path $Path2) -and (Test-Path $Path3) -and (Test-Path $logfile1) -and (Test-Path $logfile1) )
+                            {
+                                Write-Host "Installation completed" -ForegroundColor Green
+                            }
+
+                            Else 
+                            {
+                                Write-Host "Installation is not completed." -ForegroundColor Red
+                            }
+                        }
+
+                        Invoke-Command -Session $MySession -ScriptBlock $MyCommands5
+                    }
+
+                    'n'
+                    {
+                        Continue
+                    }
+
+                    Default { Write-Warning "Invalid Input" }
+                }
+
+
+                #endregion Installation
             }
         }
-
-        Elseif ($OS -eq "32-bit")
-        {
-            $PathtoC = "\\$machine\c$\patches"
-            if (Test-Path $PathtoC) 
-            {   
-                Write-Host "Establishing remote connection to $machine : " -NoNewline
-                Try { $MySession2 = New-PSSession -ComputerName $machine -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
-                Catch { Write-Host "Failed" -ForegroundColor Red; Write-Host "`n"; Continue }
-                Finally { $Error.Clear() }
-
-                $MyCommands2 = 
-                {    
-                    Write-Host "Executing install_agent.bat : " -NoNewline
-                    cd "C:\Patches"
-                    cmd.exe /c "install_agent.bat" | Out-Null
-                    Write-Host "Done" -ForegroundColor Green
-                }
-                Invoke-Command -Session $MySession2 -ScriptBlock $MyCommands2 -ErrorAction Stop
-            }
-
-            Elseif (!(Test-Path $PathtoC))
-            {
-                New-Item -ItemType Directory -Force -Path "$Destination" | Out-Null
-                Write-Host "Establishing remote connection to $machine : " -NoNewline
-                Try { $MySession2 = New-PSSession -ComputerName $machine -ErrorAction Stop; Write-Host "Done" -ForegroundColor Green }
-                Catch { Write-Host "Failed" -ForegroundColor Red; Write-Host "`n"; Continue }
-                Finally { $Error.Clear() }
-
-                $MyCommands2 = 
-                {    
-                    Write-Host "Executing install_agent.bat : " -NoNewline
-                    cd "C:\Patches"
-                    cmd.exe /c "install_agent.bat" | Out-Null
-                    Write-Host "Done" -ForegroundColor Green
-                }
-                Invoke-Command -Session $MySession2 -ScriptBlock $MyCommands2 -ErrorAction Stop
-            }
-        }
-    }
-         }
 
         'n' 
         { 
             Continue
         }
+
         Default { Write-Warning "Invalid Input" }
     }
+
 }
 
 Function Function_Eight 
 {
+$Machinelist = @(get-content -Path "$ScriptDir\Machinelist.txt")
 $Results = Foreach ($machine in $machinelist)
 {
     Try
@@ -1387,29 +1341,38 @@ Get-PSSession | Remove-PSSession
 
 Function Function_Nine
 {
-$MultiSession = New-PSSession -ComputerName $machinelist -Credential $cred
 
-$MyCommands = 
-{
-    $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State; $Wdp = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*WDP*") }).State; $StatusE = $Edpa; $StatusW = $Wdp
-    If ($StatusE -like "*running*") { $ServiceStateE = "Running" } ElseIf ($StatusE -like "*Stopped*") { $ServiceStateE = "Stopped" } ElseIf ($StatusE -eq $null) { $ServiceStateE = "False" }
-    If ($StatusW -like "*running*") { $ServiceStateW = "Running" } ElseIf ($StatusW -like "*Stopped*") { $ServiceStateW = "Stopped" } ElseIf ($StatusW -eq $null) { $ServiceStateW = "False" }
+    $Machinelist = @(get-content -Path "$ScriptDir\Machinelist.txt")
 
-    [PSCustomObject]@{
-    Machine         = $env:COMPUTERNAME
-    'EDPA Service' = $ServiceStateE
-    'WDP Service'  = $ServiceStateW
+    ForEach ($Machine in $Machinelist)
+    {
+        $MultiSession = New-PSSession -ComputerName $machinelist -Credential $cred
+
+        $MyCommands = 
+        {
+            $Edpa = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*EDPA*") }).State; $Wdp = (Get-WmiObject Win32_Service | Where-Object { ($_.Name -like "*WDP*") }).State; $StatusE = $Edpa; $StatusW = $Wdp
+            If ($StatusE -like "*running*") { $ServiceStateE = "Running" } ElseIf ($StatusE -like "*Stopped*") { $ServiceStateE = "Stopped" } ElseIf ($StatusE -eq $null) { $ServiceStateE = "False" }
+            If ($StatusW -like "*running*") { $ServiceStateW = "Running" } ElseIf ($StatusW -like "*Stopped*") { $ServiceStateW = "Stopped" } ElseIf ($StatusW -eq $null) { $ServiceStateW = "False" }
+
+            [PSCustomObject]@{
+            Machine         = $env:COMPUTERNAME
+            'EDPA Service' = $ServiceStateE
+            'WDP Service'  = $ServiceStateW
+            }
+        }
     }
-}
-$results = Invoke-Command -Session $MultiSession -ScriptBlock $MyCommands
-$results | Select-Object Machine, 'EDPA Service', 'WDP Service' | Format-Table -AutoSize
-$results | Select-Object Machine, 'EDPA Service', 'WDP Service' | Export-Excel -Path "$ScriptDir\Verify DLP Services-$dt.xlsx" -AutoSize -TableName "DLPService" -WorksheetName "DLPService"
+
+        $results = Invoke-Command -Session $MultiSession -ScriptBlock $MyCommands
+        $results | Select-Object Machine, 'EDPA Service', 'WDP Service' | Format-Table -AutoSize
+    
+#$results | Select-Object Machine, 'EDPA Service', 'WDP Service' | Export-Excel -Path "$ScriptDir\Verify DLP Services.xlsx" -AutoSize -TableName "DLPService" -WorksheetName "DLPService"
 
 Get-PSSession | Remove-PSSession
 }
 
 Function Function_Ten
 {
+    $Machinelist = @(get-content -Path "$ScriptDir\Machinelist.txt")
     Foreach ($Machine in $Machinelist)
     {
         Write-Host "`n"
@@ -1433,6 +1396,7 @@ Function Function_Ten
 Function Function_Eleven
 {
     Get-PSSession | Remove-PSSession
+    $Machinelist = @(get-content -Path "$ScriptDir\Machinelist.txt")
     Foreach ($Machine in $machinelist)
     {
         $Machine
@@ -1447,6 +1411,7 @@ Function Function_Twelve
     {
         'y'
          {
+            $Machinelist = @(get-content -Path "$ScriptDir\Machinelist.txt")
             Foreach ($Machine in $machinelist)
                 {
                     Write-Host "Restarting $Machine : " -NoNewline 
@@ -1477,7 +1442,7 @@ Write-Host " [2] Check DLP Version"
 Write-Host " [3] Copy Installer"
 Write-Host " [4] Stop DLP Services"
 Write-Host " [5] Uninstall DLP Agent"
-Write-Host " [6] Reinstall DLP Agent"
+#Write-Host " [6] Reinstall DLP Agent"
 Write-Host " [7] Install DLP Agent"
 Write-Host " [8] Verify DLP Installation Status"
 Write-Host " [9] Verify DLP Services"
@@ -1502,14 +1467,14 @@ switch ($input)
     '3' {Function_Three}
     '4' {Function_Four}
     '5' {Function_Five}
-    '6' {Function_Six}
+    '6' {Write-Host "DISABLE!"}
     '7' {Function_Seven}
     '8' {Function_Eight}
     '9' {Function_Nine}
     '10' {Function_Ten}
     '11' {Function_Eleven}
     '12' {Function_Twelve}
-    'Q' {Write-Host "The script has been canceled" -BackgroundColor Red -ForegroundColor White}
+    'q' {Write-Host "The script has been canceled" -BackgroundColor Red -ForegroundColor White}
     Default {Write-Host "Your selection = $input, is not valid. Please try again." -BackgroundColor Red -ForegroundColor White}
 }
 
