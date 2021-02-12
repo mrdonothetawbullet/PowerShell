@@ -4,8 +4,8 @@ Remove-Variable * -ErrorAction SilentlyContinue; $Error.Clear();
 $ScriptDir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $datetime = Get-Date -Format G
 $dt = (Get-Date).ToString("ddMMyyyy_HHmmss")
-Import-Module -Name slpslib
-Import-Module -Name Importexcel
+Import-Module -Name slpslib -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+Import-Module -Name Importexcel -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
 #endregion Variable
 #----------------------------------------------
 #region Application Functions
@@ -226,7 +226,7 @@ Finally
 #region Filter the Batch-Thursday column
 Write-Status -Message "Filtering the Batch-Thursday column..."
 Start-Sleep 2
-$File1 = "C:\Users\suhail_asrulsani-ops\Desktop\Excel\Batch3.csv"
+$File1 = "$ScriptDir\Batch3.csv"
 $filtered = Import-Csv -Path $File1 | Where-Object { $_."New Batch" -eq "Batch3-Thurs" }
 Try { New-Item -ItemType "file" -Path "$ScriptDir\Thursday.csv" -Force -ErrorAction Stop | Out-Null } Catch{}
 $file2 = "$ScriptDir\Temp_Thursday.csv"
@@ -283,7 +283,7 @@ Save-SLDocument
 #region Filter the Batch-Saturday column
 Write-Status -Message "Filtering the Batch-Saturday column..."
 Start-Sleep 2
-$File1 = "C:\Users\suhail_asrulsani-ops\Desktop\Excel\Batch3.csv"
+$File1 = "$ScriptDir\Batch3.csv"
 $filtered = Import-Csv -Path $File1 | Where-Object { $_."New Batch" -eq "Batch3-Sat" }
 Try { New-Item -ItemType "file" -Path "$ScriptDir\Saturday.csv" -Force -ErrorAction Stop | Out-Null } Catch{}
 $file2 = "$ScriptDir\Temp_Saturday.csv"
@@ -340,7 +340,7 @@ Save-SLDocument
 #region Filter the Batch-Sunday column
 Write-Status -Message "Filtering the Batch-Sunday column..."
 Start-Sleep 2
-$File1 = "C:\Users\suhail_asrulsani-ops\Desktop\Excel\Batch3.csv"
+$File1 = "$ScriptDir\Batch3.csv"
 $filtered = Import-Csv -Path $File1 | Where-Object { $_."New Batch" -eq "Batch3-Sun" }
 Try { New-Item -ItemType "file" -Path "$ScriptDir\Sunday.csv" -Force -ErrorAction Stop | Out-Null } Catch{}
 $file2 = "$ScriptDir\Temp_Sunday.csv"
