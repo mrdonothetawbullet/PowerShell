@@ -1,9 +1,16 @@
-If($PSCmdlet.ParameterSetName -eq 'Index')
-            {
-                $RangeValue = Convert-ToExcelRange -StartRowIndex $StartRowIndex -StartColumnIndex $StartColumnIndex -EndRowIndex $EndRowIndex -EndColumnIndex $EndColumnIndex 
-                $SLTable = $WorkBookInstance.CreateTable($StartRowIndex,$StartColumnIndex,$ENDRowIndex,$ENDColumnIndex)
+#requires -version 3.0
 
-                Write-Verbose ("Set-SLTableStyle :`tSetting TableStyle '{0}' on CellRange - StartRow/StartColumn '{1}':'{2}' & EndRow/EndColumn '{3}':'{4}' " -f $TableStyle, $StartRowIndex,$StartColumnIndex,$ENDRowIndex,$ENDColumnIndex)
-                $SLtable.SetTableStyle([SpreadsheetLight.SLTableStyleTypeValues]::$TableStyle) 
+#use CIM to list members of the local admin group
 
-            }
+[cmdletbinding()]
+Param([string]$computer=$env:computername)
+
+$query="Associators of {Win32_Group.Domain='$computer',Name='Administrators'} where Role=GroupComponent"
+
+write-verbose "Querying $computer"
+write-verbose $query 
+
+Get-CIMInstance -query $query -computer $computer | 
+Select @{Name="Member";Expression={$_.Caption}},Disabled,LocalAccount,
+@{Name="Type";Expression={([regex]"User|Group").matches($_.Class)[0].Value}},
+@{Name="Computername";Expression={$_.ComputerName.ToUpper()}}
