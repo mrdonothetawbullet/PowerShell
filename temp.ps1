@@ -1,32 +1,16 @@
-function Get-LocalGroupMembers {
-    [CmdletBinding()]
-    Param(
-        [Parameter(Mandatory = $true, Position = 0)]
-        [String]$Identity,
-        [String]$ComputerName = $env:COMPUTERNAME
-    )
+#requires -version 3.0
 
-    Add-Type -AssemblyName System.DirectoryServices.AccountManagement 
-    $context = New-Object DirectoryServices.AccountManagement.PrincipalContext('Machine', $ComputerName)
+#use CIM to list members of the local admin group
 
-    try {
-        if (!([string]::IsNullOrEmpty($Identity))) {
-            # search a specific group
-            [DirectoryServices.AccountManagement.GroupPrincipal]::FindByIdentity($context, $Identity)
-        }
-        else {
-            # search all local groups
-            $groupPrincipal    = New-Object DirectoryServices.AccountManagement.GroupPrincipal($context)
-            $principalSearcher = New-Object DirectoryServices.AccountManagement.PrincipalSearcher($groupPrincipal)
-        }
-    }
-    catch {
-        throw "Error searching group(s) on '$ComputerName'. $($_.Exception.Message)"
-    }
-    finally {
-        if ($groupPrincipal)    {$groupPrincipal.Dispose()}
-        if ($principalSearcher) {$principalSearcher.FindAll()}
-    }
-}
+[cmdletbinding()]
+Param([string]$computer=$env:computername)
 
-(Get-LocalGroupMembers -Identity "Remote Desktop Users").Members | Select-Object -ExpandProperty Name
+$query="Associators of {Win32_Group.Domain='$computer',Name='Administrators'} where Role=GroupComponent"
+
+write-verbose "Querying $computer"
+write-verbose $query 
+
+Get-CIMInstance -query $query -computer $computer | 
+Select @{Name="Member";Expression={$_.Caption}},Disabled,LocalAccount,
+@{Name="Type";Expression={([regex]"User|Group").matches($_.Class)[0].Value}},
+@{Name="Computername";Expression={$_.ComputerName.ToUpper()}}
