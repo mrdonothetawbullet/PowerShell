@@ -1,1 +1,3 @@
-$Group.PSBase.Invoke('Members').Foreach{ $_.GetType().InvokeMember('Name','GetProperty',$null,$_,$null) }
+([ADSI]"WinNT://./Administrators").psbase.Invoke('Members') | % {
+ ([ADSI]$_).InvokeGet('AdsPath')
+}
