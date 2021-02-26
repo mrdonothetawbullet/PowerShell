@@ -1,4 +1,4 @@
-﻿Clear-Host
+Clear-Host
 Get-PSSession | Remove-PSSession
 Remove-Variable * -ErrorAction SilentlyContinue; $Error.Clear()
 $ScriptDir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
@@ -724,6 +724,7 @@ Function Function_Twenty
 #################################################
 Function Function_TwentyOne
 {
+    Get-PSSession | Remove-PSSession
     $Serverlist = @(get-content -Path "$ScriptDir\serverlist.txt")
     $Results = Foreach ($Server in $Serverlist)
     {
