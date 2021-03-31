@@ -2,14 +2,6 @@ Clear-Host
 Get-PSSession | Remove-PSSession
 Remove-Variable * -ErrorAction SilentlyContinue; $Error.Clear()
 $ScriptDir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$Username = 'suhail_asrulsani-ops'
-$Password = 'Welcome12'
-$Usernamerge = 'suhail_asrulsani-ops'
-$Passwordrge = 'Welcome1'
-$Passexchange = ConvertTo-SecureString -AsPlainText -Force -String "Welcome12"
-$Domain = 'globalnet'
-$dt = (Get-Date).ToString("ddMMyyyy_HHmmss") 
-$cred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "globalnet\suhail_asrulsani-ops",$Passexchange
 $fromaddress = "suhail_asrulsani@averis.biz"
 Remove-Item -Path "$ScriptDir\Report\ExchangeReport.html" -Force -ErrorAction SilentlyContinue
 Remove-Item -Path "$ScriptDir\Report\KBEventViewer.xlsx" -Force -ErrorAction SilentlyContinue
